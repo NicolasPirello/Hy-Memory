@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { createReadStream, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
+import { type GuiLocale, translate } from "@one-memory/contracts/gui-i18n";
 import { RecallBroker } from "@one-memory/host-bridge";
 import {
   checkSkillDrift,
@@ -18,6 +19,7 @@ import {
   defaultManagedInstallRoot,
   diagnosticError,
   disableRuntimeService,
+  domainCodeOf,
   type HostPermissionClient,
   installPackagedRuntime,
   installUserService,
@@ -91,6 +93,11 @@ import {
   resolvePackagedCommit,
 } from "./isolated-runtime";
 import {
+  LanguagePreferences,
+  preferredSystemLanguage,
+} from "./language-preferences";
+import { installLanguagePreferencesIpc } from "./language-preferences-ipc";
+import {
   disableLegacyLoginItem,
   wasOpenedByLegacyLoginItem,
 } from "./login-item";
@@ -108,6 +115,7 @@ import {
   stableRuntimeErrorCode,
   startStableRuntimeRepair,
 } from "./stable-runtime";
+import { STARTUP_SCREEN_URL, startupScreenHtml } from "./startup-screen";
 import { resolveTrialProfile } from "./trial-profile";
 import { createWindowOptions } from "./window-options";
 
@@ -122,6 +130,9 @@ let runtimeSupervisor: RuntimeSupervisor | null = null;
 let runtimeDataDir: string | null = null;
 let preserveManagedRuntimeOnQuit = false;
 let disposeTray: (() => void) | null = null;
+let disposeApplicationMenu: (() => void) | null = null;
+let languagePreferences: LanguagePreferences | null = null;
+let disposeLanguagePreferences: (() => void) | null = null;
 const displayWindows = new Set<BrowserWindow>();
 let disposeDisplayPreferences: (() => void) | null = null;
 let disposeSourceDirectoryPicker: (() => void) | null = null;
@@ -143,6 +154,7 @@ installEarlyStartupErrorHandler({
     process.env.ONE_MEMORY_DATA_DIR?.trim() ||
     path.join(app.getPath("home"), ".one-memory"),
   stderr: process.stderr,
+  readLocale: () => languagePreferences?.read().locale ?? "zh-CN",
   showError: (title, message) => dialog.showErrorBox(title, message),
   exit: (code) => app.exit(code),
 });
@@ -236,24 +248,7 @@ function prepareProtocol(): void {
   ]);
 }
 
-async function createWindow(isQuitting: () => boolean): Promise<void> {
-  void desktopDiagnostics?.log({
-    level: "info",
-    component: "desktop.window",
-    event: "window.requested",
-    outcome: "started",
-    ...(desktopStartupStartedAt
-      ? { duration_ms: Date.now() - desktopStartupStartedAt }
-      : {}),
-  });
-  const window = new BrowserWindow(
-    createWindowOptions(
-      path.join(__dirname, "preload.js"),
-      screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea,
-    ),
-  );
-  displayWindows.add(window);
-  window.once("closed", () => displayWindows.delete(window));
+function attachWindowGuards(window: BrowserWindow): void {
   window.webContents.on("will-navigate", (event, targetUrl) => {
     if (
       !isAllowedNavigation(targetUrl, {
@@ -265,6 +260,96 @@ async function createWindow(isQuitting: () => boolean): Promise<void> {
     }
   });
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+}
+
+function newWindow(): BrowserWindow {
+  const window = new BrowserWindow(
+    createWindowOptions(
+      path.join(__dirname, "preload.js"),
+      screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea,
+    ),
+  );
+  displayWindows.add(window);
+  window.once("closed", () => displayWindows.delete(window));
+  attachWindowGuards(window);
+  return window;
+}
+
+let startupWindow: BrowserWindow | null = null;
+let appProtocolInstalled = false;
+
+/** Serve the packaged web bundle. Also the first thing the startup window
+ *  needs, so it is idempotent: the protocol may only be claimed once. */
+function installPackagedWebProtocol(): void {
+  if (!app.isPackaged || appProtocolInstalled) return;
+  installAppProtocol(path.join(process.resourcesPath, "web"), {
+    // Preferences are open by now: beforeNativeUi runs before this window.
+    startupScreen: () => {
+      let locale: GuiLocale = "zh-CN";
+      try {
+        locale = languagePreferences?.read().locale ?? "zh-CN";
+      } catch {
+        // An unreadable preference keeps the Chinese placeholder.
+      }
+      return startupScreenHtml(locale);
+    },
+  });
+  appProtocolInstalled = true;
+}
+
+/** Put a window on screen before the services exist.
+ *
+ * `initialize` installs a runtime and waits for Core, which is tens of seconds
+ * on a cold launch. Showing the placeholder first turns that wait from a dead
+ * screen into a visible app. The page it loads performs no IPC, so it cannot
+ * race the handlers `initialize` registers.
+ */
+async function createStartupWindow(isQuitting: () => boolean): Promise<void> {
+  if (!app.isPackaged) return;
+  installPackagedWebProtocol();
+  const window = newWindow();
+  startupWindow = window;
+  window.once("ready-to-show", () => {
+    if (!isQuitting() && !window.isDestroyed()) window.show();
+  });
+  try {
+    await window.loadURL(STARTUP_SCREEN_URL);
+  } catch (error) {
+    if (!window.isDestroyed()) window.destroy();
+    startupWindow = null;
+    throw error;
+  }
+}
+
+/** Swap the placeholder onto the real app once the services are up. */
+async function revealStartupWindow(isQuitting: () => boolean): Promise<void> {
+  const window = startupWindow;
+  startupWindow = null;
+  if (!window || window.isDestroyed() || isQuitting()) return;
+  window.once("ready-to-show", () => {
+    if (!isQuitting() && !window.isDestroyed()) window.show();
+  });
+  try {
+    await window.loadURL(
+      app.isPackaged ? `${APP_ORIGIN}/index.html` : developmentUrl,
+    );
+  } catch (error) {
+    if (!window.isDestroyed()) window.destroy();
+    throw error;
+  }
+}
+
+async function createWindow(isQuitting: () => boolean): Promise<void> {
+  void desktopDiagnostics?.log({
+    level: "info",
+    component: "desktop.window",
+    event: "window.requested",
+    outcome: "started",
+    ...(desktopStartupStartedAt
+      ? { duration_ms: Date.now() - desktopStartupStartedAt }
+      : {}),
+  });
+  const window = newWindow();
   window.once("ready-to-show", () => {
     if (!isQuitting() && !window.isDestroyed()) {
       window.show();
@@ -596,7 +681,7 @@ async function initialize(isQuitting: () => boolean): Promise<void> {
     event: string,
     action: () => Promise<T> | T,
     details: Record<string, string | number | boolean | null> = {},
-    errorCode = "desktop_action_failed",
+    fallbackCode = "desktop_action_failed",
   ): Promise<T> => {
     const traceId = randomUUID();
     const started = Date.now();
@@ -621,6 +706,10 @@ async function initialize(isQuitting: () => boolean): Promise<void> {
       });
       return result;
     } catch (error) {
+      // A thrown DomainError already says what failed; the caller's code is
+      // only the fallback for the failures nobody has classified yet. Logging
+      // the fallback over a real code is what made issue #29 undiagnosable:
+      // every refusal looked like the same generic action failure.
       await diagnostics.log({
         level: "error",
         component: "desktop.action",
@@ -628,7 +717,7 @@ async function initialize(isQuitting: () => boolean): Promise<void> {
         outcome: "failed",
         trace_id: traceId,
         duration_ms: Date.now() - started,
-        error_code: errorCode,
+        error_code: domainCodeOf(error) ?? fallbackCode,
         ...diagnosticError(error),
         details,
       });
@@ -953,11 +1042,29 @@ async function initialize(isQuitting: () => boolean): Promise<void> {
       );
     },
   );
-  if (app.isPackaged) {
-    installAppProtocol(path.join(process.resourcesPath, "web"));
-  }
+  installPackagedWebProtocol();
 
   try {
+    if (languagePreferences) {
+      disposeLanguagePreferences = installLanguagePreferencesIpc({
+        ipc: ipcMain,
+        preferences: languagePreferences,
+        requireTrustedWindow,
+        broadcast: (snapshot) => {
+          for (const window of displayWindows) {
+            try {
+              assertTrustedWindow(window);
+              window.webContents.mainFrame.send(
+                "one-memory:language-preference-changed",
+                snapshot,
+              );
+            } catch {
+              // Navigation/destruction races must never leak to another document.
+            }
+          }
+        },
+      });
+    }
     disposeDisplayPreferences = installDisplayPreferences();
     disposeSourceDirectoryPicker = installSourceDirectoryPicker();
     if (appManagedRuntime) {
@@ -1150,10 +1257,20 @@ async function initialize(isQuitting: () => boolean): Promise<void> {
       });
       void dialog.showMessageBox({
         type: "warning",
-        message: "请先将 MemHub 拖到“应用程序”文件夹",
-        detail:
-          "从“应用程序”重新打开后，MemHub 才会接入其他应用并安装命令行工具。",
-        buttons: ["知道了"],
+        message: translate(
+          languagePreferences?.read().locale ?? "zh-CN",
+          "nativeMoveTitle",
+        ),
+        detail: translate(
+          languagePreferences?.read().locale ?? "zh-CN",
+          "nativeMoveDetail",
+        ),
+        buttons: [
+          translate(
+            languagePreferences?.read().locale ?? "zh-CN",
+            "nativeAcknowledge",
+          ),
+        ],
       });
     } else if (
       trialProfile === null &&
@@ -1318,12 +1435,21 @@ if (desktopVersion !== null) {
     platform: process.platform,
     background: legacyLoginLaunch || process.argv.includes("--background"),
     prepare: prepareProtocol,
+    beforeNativeUi: async () => {
+      languagePreferences = await LanguagePreferences.open(
+        app.getPath("userData"),
+        preferredSystemLanguage(app),
+      );
+    },
     initialize,
     createWindow,
+    showStartupWindow: createStartupWindow,
+    revealStartupWindow,
     getWindows: () => [...displayWindows],
     installTray: (open) => {
-      installApplicationMenu({
+      disposeApplicationMenu = installApplicationMenu({
         productName: app.getName(),
+        language: languagePreferences ?? undefined,
         buildMenu: (template) => Menu.buildFromTemplate(template),
         setMenu: (menu) => Menu.setApplicationMenu(menu),
         exportLogs: async () => {
@@ -1335,6 +1461,7 @@ if (desktopVersion !== null) {
       });
       disposeTray = installBackgroundTray({
         app,
+        language: languagePreferences ?? undefined,
         platform: process.platform,
         resourcesPath: process.resourcesPath,
         appPath: app.getAppPath(),
@@ -1379,6 +1506,9 @@ if (desktopVersion !== null) {
         ...(coreSupervisor ? { instance_id: coreSupervisor.instanceId } : {}),
       });
       // An admitted native effect must settle and journal before Runtime detach.
+      disposeLanguagePreferences?.();
+      disposeLanguagePreferences = null;
+      await languagePreferences?.drain();
       await connectionSetup?.drain();
       // BUG-12: stopping the supervisor only releases this process's handles. In
       // a packaged build the Runtime is its own process and was left running
@@ -1427,6 +1557,10 @@ if (desktopVersion !== null) {
       });
     },
     dispose: () => {
+      disposeLanguagePreferences?.();
+      disposeLanguagePreferences = null;
+      disposeApplicationMenu?.();
+      disposeApplicationMenu = null;
       connectionSetup?.dispose();
       disposeDiagnostics?.();
       disposeDiagnostics = null;
@@ -1448,7 +1582,10 @@ if (desktopVersion !== null) {
         error instanceof Error ? error.name : "UnknownError",
       );
       dialog.showErrorBox(
-        "MemHub 无法启动",
+        translate(
+          languagePreferences?.read().locale ?? "zh-CN",
+          "nativeErrorTitle",
+        ),
         error instanceof Error ? error.message : "desktop_unavailable",
       );
     },

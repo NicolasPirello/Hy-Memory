@@ -18,9 +18,17 @@ interface LifecycleOptions {
   platform: NodeJS.Platform;
   background: boolean;
   prepare(): void;
+  beforeNativeUi?(): Promise<void>;
   initialize(isQuitting: () => boolean): Promise<void>;
   stop(): Promise<void>;
   dispose(): void;
+  /** Optional: put a window on screen before `initialize` runs. The startup
+   *  window shows a placeholder, because the services it would talk to do not
+   *  exist yet. */
+  showStartupWindow?(isQuitting: () => boolean): Promise<void>;
+  /** Optional: swap the startup window onto the real app. Called only after
+   *  `initialize` succeeded, so every handler the app asks for is live. */
+  revealStartupWindow?(isQuitting: () => boolean): Promise<void>;
   createWindow(isQuitting: () => boolean): Promise<void>;
   getWindows(): DesktopWindow[];
   installTray(open: () => void): void;
@@ -146,10 +154,32 @@ export function startDesktopLifecycle(options: LifecycleOptions): void {
       if (quitting) return;
       startup = Promise.resolve().then(async () => {
         if (quitting) return;
+        await options.beforeNativeUi?.();
+        if (quitting) return;
         options.installTray(open);
+        // A window first, services second. Startup can take tens of seconds;
+        // spending them with no window at all is indistinguishable from a
+        // launch that failed, and the person clicks the icon again.
+        let startupWindowShown = false;
+        if (wantsWindow && options.showStartupWindow) {
+          // Best effort. The placeholder only fills a wait the app would
+          // otherwise spend blank; refusing to start because a cosmetic page
+          // could not be drawn would turn a slow launch into no launch.
+          try {
+            await options.showStartupWindow(() => quitting);
+            startupWindowShown = true;
+          } catch {
+            startupWindowShown = false;
+          }
+        }
+        if (quitting) return;
         await options.initialize(() => quitting);
         if (quitting) return;
         ready = true;
+        if (startupWindowShown && options.revealStartupWindow) {
+          await options.revealStartupWindow(() => quitting);
+        }
+        if (quitting) return;
         if (wantsWindow) open();
         await opening;
       });

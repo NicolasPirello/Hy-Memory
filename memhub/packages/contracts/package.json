@@ -1,6 +1,6 @@
 {
   "name": "@one-memory/contracts",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "type": "module",
   "types": "./src/index.ts",
@@ -8,6 +8,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./gui-i18n": {
+      "types": "./src/gui-i18n.ts",
+      "default": "./src/gui-i18n.ts"
     }
   },
   "scripts": {
