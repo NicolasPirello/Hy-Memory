@@ -26,7 +26,11 @@ import {
 } from "./host-state";
 import { useOnboardingTranslation } from "./onboarding-language";
 import { R6Button, R6Switch } from "./R6Controls";
-import { latestSource, useSource } from "./source-state";
+import {
+  latestSource,
+  sourceAuthorizationNote,
+  useSource,
+} from "./source-state";
 import "./application-detail.css";
 
 /** A failed host write as data: worded only when rendered. */
@@ -117,6 +121,9 @@ export function ApplicationDetail({
   const [backfillNotice, setBackfillNotice] = useState(false);
   const [appLocationNote, setAppLocationNote] = useState<string | null>(null);
   const syncChecked = syncIntent ?? source.sync_enabled === true;
+  // The sync switch is the source authorization control, so the only note
+  // beside it is about the source. Plugin trouble belongs to the other switch.
+  const authorizationNote = sourceAuthorizationNote(source);
   const [insertionIntent, setInsertionIntent] = useState<boolean | null>(null);
   const [memoryIntent, setMemoryIntent] = useState<boolean | null>(null);
   const refreshFlight = useRef<object | null>(null);
@@ -533,6 +540,9 @@ export function ApplicationDetail({
               <p role="status">
                 {text("将补充冻结期间的新对话；原有 pending Job 继续处理。")}
               </p>
+            )}
+            {!syncing && authorizationNote && (
+              <p role="status">{text(authorizationNote)}</p>
             )}
             {syncError && <p role="alert">{text(syncError)}</p>}
           </div>

@@ -50,6 +50,7 @@ const languageChineseMessages = {
   languageSaveError: "无法保存语言设置，请重试。",
   languageLoadError: "无法加载语言设置，请重试。",
   nativeErrorTitle: "MemHub 无法启动",
+  startupPreparing: "正在启动，正在准备记忆服务…",
 } as const;
 
 const languageSpanishMessages: Record<
@@ -67,6 +68,7 @@ const languageSpanishMessages: Record<
   languageSaveError: "No se pudo guardar el idioma. Inténtalo de nuevo.",
   languageLoadError: "No se pudo cargar el idioma. Inténtalo de nuevo.",
   nativeErrorTitle: "MemHub no pudo iniciarse",
+  startupPreparing: "Iniciando y preparando el servicio de memorias…",
 };
 
 type Catalog = {

@@ -36,6 +36,10 @@ import type {
   SyncHookStatus,
 } from "./sync-hook";
 
+declare const __ONE_MEMORY_VERSION__: string;
+declare const __ONE_MEMORY_BUILD_NUMBER__: string;
+declare const __ONE_MEMORY_COMMIT__: string;
+
 function languageSnapshot(payload: unknown): LanguageSnapshot {
   if (!isLanguageSnapshot(payload))
     throw Error("language_preferences_unavailable");
@@ -47,6 +51,11 @@ function languageSnapshot(payload: unknown): LanguageSnapshot {
 }
 
 contextBridge.exposeInMainWorld("oneMemory", {
+  getBuildInfo: () => ({
+    version: __ONE_MEMORY_VERSION__,
+    buildNumber: __ONE_MEMORY_BUILD_NUMBER__,
+    commit: __ONE_MEMORY_COMMIT__,
+  }),
   getLanguagePreference: async (): Promise<LanguageSnapshot> =>
     languageSnapshot(
       await ipcRenderer.invoke("one-memory:get-language-preference"),

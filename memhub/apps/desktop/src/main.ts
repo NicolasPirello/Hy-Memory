@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { createReadStream, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
-import { translate } from "@one-memory/contracts/gui-i18n";
+import { type GuiLocale, translate } from "@one-memory/contracts/gui-i18n";
 import { RecallBroker } from "@one-memory/host-bridge";
 import {
   checkSkillDrift,
@@ -19,6 +19,7 @@ import {
   defaultManagedInstallRoot,
   diagnosticError,
   disableRuntimeService,
+  domainCodeOf,
   type HostPermissionClient,
   installPackagedRuntime,
   installUserService,
@@ -114,6 +115,7 @@ import {
   stableRuntimeErrorCode,
   startStableRuntimeRepair,
 } from "./stable-runtime";
+import { STARTUP_SCREEN_URL, startupScreenHtml } from "./startup-screen";
 import { resolveTrialProfile } from "./trial-profile";
 import { createWindowOptions } from "./window-options";
 
@@ -246,24 +248,7 @@ function prepareProtocol(): void {
   ]);
 }
 
-async function createWindow(isQuitting: () => boolean): Promise<void> {
-  void desktopDiagnostics?.log({
-    level: "info",
-    component: "desktop.window",
-    event: "window.requested",
-    outcome: "started",
-    ...(desktopStartupStartedAt
-      ? { duration_ms: Date.now() - desktopStartupStartedAt }
-      : {}),
-  });
-  const window = new BrowserWindow(
-    createWindowOptions(
-      path.join(__dirname, "preload.js"),
-      screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea,
-    ),
-  );
-  displayWindows.add(window);
-  window.once("closed", () => displayWindows.delete(window));
+function attachWindowGuards(window: BrowserWindow): void {
   window.webContents.on("will-navigate", (event, targetUrl) => {
     if (
       !isAllowedNavigation(targetUrl, {
@@ -275,6 +260,96 @@ async function createWindow(isQuitting: () => boolean): Promise<void> {
     }
   });
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+}
+
+function newWindow(): BrowserWindow {
+  const window = new BrowserWindow(
+    createWindowOptions(
+      path.join(__dirname, "preload.js"),
+      screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea,
+    ),
+  );
+  displayWindows.add(window);
+  window.once("closed", () => displayWindows.delete(window));
+  attachWindowGuards(window);
+  return window;
+}
+
+let startupWindow: BrowserWindow | null = null;
+let appProtocolInstalled = false;
+
+/** Serve the packaged web bundle. Also the first thing the startup window
+ *  needs, so it is idempotent: the protocol may only be claimed once. */
+function installPackagedWebProtocol(): void {
+  if (!app.isPackaged || appProtocolInstalled) return;
+  installAppProtocol(path.join(process.resourcesPath, "web"), {
+    // Preferences are open by now: beforeNativeUi runs before this window.
+    startupScreen: () => {
+      let locale: GuiLocale = "zh-CN";
+      try {
+        locale = languagePreferences?.read().locale ?? "zh-CN";
+      } catch {
+        // An unreadable preference keeps the Chinese placeholder.
+      }
+      return startupScreenHtml(locale);
+    },
+  });
+  appProtocolInstalled = true;
+}
+
+/** Put a window on screen before the services exist.
+ *
+ * `initialize` installs a runtime and waits for Core, which is tens of seconds
+ * on a cold launch. Showing the placeholder first turns that wait from a dead
+ * screen into a visible app. The page it loads performs no IPC, so it cannot
+ * race the handlers `initialize` registers.
+ */
+async function createStartupWindow(isQuitting: () => boolean): Promise<void> {
+  if (!app.isPackaged) return;
+  installPackagedWebProtocol();
+  const window = newWindow();
+  startupWindow = window;
+  window.once("ready-to-show", () => {
+    if (!isQuitting() && !window.isDestroyed()) window.show();
+  });
+  try {
+    await window.loadURL(STARTUP_SCREEN_URL);
+  } catch (error) {
+    if (!window.isDestroyed()) window.destroy();
+    startupWindow = null;
+    throw error;
+  }
+}
+
+/** Swap the placeholder onto the real app once the services are up. */
+async function revealStartupWindow(isQuitting: () => boolean): Promise<void> {
+  const window = startupWindow;
+  startupWindow = null;
+  if (!window || window.isDestroyed() || isQuitting()) return;
+  window.once("ready-to-show", () => {
+    if (!isQuitting() && !window.isDestroyed()) window.show();
+  });
+  try {
+    await window.loadURL(
+      app.isPackaged ? `${APP_ORIGIN}/index.html` : developmentUrl,
+    );
+  } catch (error) {
+    if (!window.isDestroyed()) window.destroy();
+    throw error;
+  }
+}
+
+async function createWindow(isQuitting: () => boolean): Promise<void> {
+  void desktopDiagnostics?.log({
+    level: "info",
+    component: "desktop.window",
+    event: "window.requested",
+    outcome: "started",
+    ...(desktopStartupStartedAt
+      ? { duration_ms: Date.now() - desktopStartupStartedAt }
+      : {}),
+  });
+  const window = newWindow();
   window.once("ready-to-show", () => {
     if (!isQuitting() && !window.isDestroyed()) {
       window.show();
@@ -606,7 +681,7 @@ async function initialize(isQuitting: () => boolean): Promise<void> {
     event: string,
     action: () => Promise<T> | T,
     details: Record<string, string | number | boolean | null> = {},
-    errorCode = "desktop_action_failed",
+    fallbackCode = "desktop_action_failed",
   ): Promise<T> => {
     const traceId = randomUUID();
     const started = Date.now();
@@ -631,6 +706,10 @@ async function initialize(isQuitting: () => boolean): Promise<void> {
       });
       return result;
     } catch (error) {
+      // A thrown DomainError already says what failed; the caller's code is
+      // only the fallback for the failures nobody has classified yet. Logging
+      // the fallback over a real code is what made issue #29 undiagnosable:
+      // every refusal looked like the same generic action failure.
       await diagnostics.log({
         level: "error",
         component: "desktop.action",
@@ -638,7 +717,7 @@ async function initialize(isQuitting: () => boolean): Promise<void> {
         outcome: "failed",
         trace_id: traceId,
         duration_ms: Date.now() - started,
-        error_code: errorCode,
+        error_code: domainCodeOf(error) ?? fallbackCode,
         ...diagnosticError(error),
         details,
       });
@@ -963,9 +1042,7 @@ async function initialize(isQuitting: () => boolean): Promise<void> {
       );
     },
   );
-  if (app.isPackaged) {
-    installAppProtocol(path.join(process.resourcesPath, "web"));
-  }
+  installPackagedWebProtocol();
 
   try {
     if (languagePreferences) {
@@ -1366,6 +1443,8 @@ if (desktopVersion !== null) {
     },
     initialize,
     createWindow,
+    showStartupWindow: createStartupWindow,
+    revealStartupWindow,
     getWindows: () => [...displayWindows],
     installTray: (open) => {
       disposeApplicationMenu = installApplicationMenu({

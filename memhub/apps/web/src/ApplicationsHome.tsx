@@ -40,9 +40,14 @@ import {
 import { subscribePoll } from "./poll-scheduler";
 import { R6Button } from "./R6Controls";
 import { prefetchDataRuntime } from "./runtime-state";
+import { refreshSedimentation, useSedimentation } from "./sedimentation-state";
 import type { useImportSources } from "./use-import-sources";
 import "./applications-home.css";
-import type { GuiLocale } from "@one-memory/contracts/gui-i18n";
+import {
+  type GuiLocale,
+  isMessageKey,
+  translate,
+} from "@one-memory/contracts/gui-i18n";
 import {
   applicationsText,
   useApplicationsLanguage,
@@ -212,6 +217,7 @@ export function ApplicationsHome({
   // A failed poll keeps the last answer on screen; the page must say it is old.
   const hostStale = hostQuery.isError && hostQuery.data !== undefined;
   const auto = useAutoConnect();
+  const sedimentation = useSedimentation();
   const [summary, setSummary] = useState<HomeSummary | null>(null);
   const [processing, setProcessing] = useState<MemoryProcessingSummary | null>(
     null,
@@ -574,6 +580,7 @@ export function ApplicationsHome({
         getMemoryProcessing(),
         getLiveSyncHealth(),
         getRecentConversations({ limit: 1, recentActivity: true }),
+        refreshSedimentation(),
       ]);
       busy = false;
       if (stopped) return;
@@ -672,19 +679,18 @@ export function ApplicationsHome({
     (s) => s.authorized || s.detected === true || s.location_state === "found",
   );
   const stateLabel = a(
-    processing?.running
+    sedimentation?.enabled === true
       ? "running"
-      : processing?.blocked_stages?.some((stage) => stage.count > 0)
-        ? "queued"
-        : processing?.waiting_for_model
-          ? "waitingModel"
-          : processing?.failed
-            ? "needsAttention"
-            : processing?.pending
-              ? "preparing"
-              : processing
-                ? "ready"
-                : "unchecked",
+      : sedimentation?.enabled === false
+        ? "paused"
+        : "unchecked",
+  );
+  const stateDetail = a(
+    sedimentation?.enabled === false
+      ? "stoppedNew"
+      : sedimentation?.enabled === true
+        ? "organizingNew"
+        : "checkingProcessing",
   );
   const latestClock = latest ? clockParts(latest.updated_at, locale) : null;
   const time = latestClock?.clock ?? (latest ? a("unknownTime") : null);
@@ -758,18 +764,21 @@ export function ApplicationsHome({
             source.source_id === failure.sourceId && source.sync_enabled,
         ),
   );
+  // Reasons are interface copy (host write reasons, sync rejections) or codes.
+  const reasonText = (reason: string) =>
+    isMessageKey(reason) ? translate(locale, reason) : reason;
   const autoFailureText = autoFailures
     .map((failure) =>
       failure.kind === "host"
         ? a("autoHostFailed", {
             name: nameOf(failure.sourceId),
             reason: failure.reason
-              ? a("failureReason", { reason: failure.reason })
+              ? a("failureReason", { reason: reasonText(failure.reason) })
               : "",
           })
         : a("autoSyncFailed", {
             name: nameOf(failure.sourceId),
-            reason: failure.reason ?? "",
+            reason: failure.reason ? reasonText(failure.reason) : "",
           }),
     )
     .join("");
@@ -869,13 +878,7 @@ export function ApplicationsHome({
               <div>
                 <p>{a("processing")}</p>
                 <strong className="r6-home-word">{stateLabel}</strong>
-                <small>
-                  {processing?.running
-                    ? a("organizingNew")
-                    : processing?.pending
-                      ? a("waitingQueue")
-                      : a("currentState")}
-                </small>
+                <small>{stateDetail}</small>
               </div>
               <div>
                 <p>{a("recentUpdate")}</p>

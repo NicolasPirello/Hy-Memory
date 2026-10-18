@@ -295,7 +295,7 @@ it.each([
   ["interrupted", "Interrumpida"],
   ["failed", "Problema de importación"],
   ["cancelled", "Cancelada"],
-  ["completed", "Guardada"],
+  ["completed", "Importación completada"],
 ] as const)(
   "translates %s progress receipts without changing counts",
   async (status, label) => {
@@ -363,11 +363,11 @@ it.each(["es", "zh-CN"] as const)(
     expect(statuses).toEqual(
       locale === "es"
         ? [
-            "Guardada",
+            "Importación completada",
             "Problema de importación · Errores de lectura: 1",
             "En pausa · Errores de lectura: 2",
           ]
-        : ["已保存", "导入遇到问题 · 1 条读取异常", "已暂停 · 2 条读取异常"],
+        : ["导入完成", "导入遇到问题 · 1 条读取异常", "已暂停 · 2 条读取异常"],
     );
   },
 );
@@ -425,3 +425,68 @@ it("translates model configuration, validation and advanced fields without activ
   expect(screen.getByText("请填写 API Key。")).toBeTruthy();
   expect(screen.getByLabelText("超时（秒）")).toBeTruthy();
 });
+
+it.each([
+  [
+    "completed",
+    null,
+    "Mensajes examinados: 5; no hay conversaciones para guardar",
+    "已扫描 5 条，本次没有可保存的对话",
+  ],
+  [
+    "completed",
+    "2026-01-01T00:00:00Z",
+    "Mensajes examinados: 5; no hay conversaciones dentro del periodo elegido",
+    "已扫描 5 条，本次没有符合时间范围的对话",
+  ],
+  [
+    "running",
+    "2026-01-01T00:00:00Z",
+    "Mensajes examinados: 5; filtrando los últimos 3 días",
+    "已扫描 5 条，正在筛选最近 3 天",
+  ],
+  [
+    "running",
+    null,
+    "Mensajes examinados: 5; filtrando",
+    "已扫描 5 条，正在筛选",
+  ],
+  [
+    "paused",
+    null,
+    "Mensajes examinados: 5; aún sin guardar",
+    "已扫描 5 条，尚未保存",
+  ],
+] as const)(
+  "words a %s scan with history_after=%s in both languages",
+  async (status, historyAfter, spanish, chinese) => {
+    const job = {
+      job_id: "fixture-job",
+      source_id: "cursor",
+      status,
+      stored: 0,
+      discovered: 5,
+      errors: 0,
+      history_after: historyAfter,
+      created_at: "2026-01-01T00:00:00Z",
+      updated_at: "2026-01-01T00:01:00Z",
+    } as unknown as ImportJob;
+    for (const [locale, expected] of [
+      ["es", spanish],
+      ["zh-CN", chinese],
+    ] as const) {
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, locale);
+      const view = render(
+        <LanguageProvider>
+          <R6ImportProgress
+            sourceIds={["cursor"]}
+            sources={[{ ...source, authorized: true }]}
+            jobs={[job]}
+          />
+        </LanguageProvider>,
+      );
+      expect(await screen.findByText(expected)).toBeTruthy();
+      view.unmount();
+    }
+  },
+);

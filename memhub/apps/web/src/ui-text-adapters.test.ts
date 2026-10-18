@@ -1,3 +1,5 @@
+import type { SourceResponse } from "@one-memory/contracts";
+import { isMessageKey, translate } from "@one-memory/contracts/gui-i18n";
 import { describe, expect, it } from "vitest";
 
 import { applicationsText } from "./applications-language";
@@ -7,6 +9,7 @@ import {
   extractionStateLabel,
   memoryHistoryActionLabel,
 } from "./memory-processing-labels";
+import { sourceAuthorizationNote } from "./source-state";
 
 const unknown = [
   "一段导入的对话内容",
@@ -110,5 +113,28 @@ describe("presentation adapters", () => {
     expect(memoryText("zh-CN", "删除（记录）")).toBe("删除");
     expect(memoryText("es", "删除（记录）")).toBe("Eliminación");
     expect(memoryText("es", "删除")).toBe("Eliminar");
+  });
+});
+
+describe("source authorization notes", () => {
+  const states = [
+    "missing_grant",
+    "revoked_grant",
+    "source_identity_changed",
+    "source_root_unavailable",
+    "candidate_changed",
+  ];
+  it.each(states)("translates the %s note and its sync follow-up", (state) => {
+    const note = sourceAuthorizationNote({
+      authorization_state: state,
+    } as unknown as SourceResponse);
+    expect(note).not.toBeNull();
+    // The sync rejection appends this follow-up to the same note.
+    for (const message of [note as string, `${note}完成后再开启持续同步。`]) {
+      expect(isMessageKey(message), message).toBe(true);
+      if (!isMessageKey(message)) continue;
+      expect(translate("zh-CN", message)).toBe(message);
+      expect(translate("es", message)).not.toMatch(/[一-鿿]/);
+    }
   });
 });

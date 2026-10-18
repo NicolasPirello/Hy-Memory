@@ -4,6 +4,8 @@ import {
   ChevronRight,
   CirclePause,
   CirclePlay,
+  Maximize2,
+  Minimize2,
   RefreshCw,
   Search,
   X,
@@ -27,6 +29,7 @@ import type {
   DebugLogSnapshot,
 } from "./debug-log-types";
 import { useGuiLanguage } from "./gui-language";
+import { ModelUsageView } from "./ModelUsageView";
 import {
   rendererDebugLogs,
   subscribeRendererDebugLogs,
@@ -51,10 +54,13 @@ const SERVICE_LABELS: Record<DebugLogEntry["service"], string> = {
 };
 
 export function DebugLogPanel() {
-  const { t, tn, locale } = useGuiLanguage();
+  const { t, tnPlain, locale } = useGuiLanguage();
   const supported = typeof window.oneMemory?.getDebugLogs === "function";
   const [open, setOpen] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [tab, setTab] = useState<"logs" | "usage">("logs");
   const [live, setLive] = useState(true);
+  const [usageRefreshToken, setUsageRefreshToken] = useState(0);
   const [query, setQuery] = useState("");
   const [level, setLevel] = useState<DebugLogLevel | "all">("all");
   const [captureLevel, setCaptureLevel] = useState<DiagnosticLogLevel>("info");
@@ -69,6 +75,7 @@ export function DebugLogPanel() {
   const snapshotRef = useRef<DebugLogSnapshot | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const listRef = useRef<HTMLDivElement>(null);
+  const followLatestRef = useRef(true);
   const rendererEntries = useSyncExternalStore(
     subscribeRendererDebugLogs,
     rendererDebugLogs,
@@ -90,7 +97,7 @@ export function DebugLogPanel() {
   }, []);
 
   useEffect(() => {
-    if (!open || !supported) return;
+    if (!open || !supported || tab !== "logs") return;
     void refresh();
     void getDiagnosticLogLevel()
       .then(setCaptureLevel)
@@ -98,7 +105,18 @@ export function DebugLogPanel() {
     if (!live) return;
     const timer = window.setInterval(() => void refresh(), 1_000);
     return () => window.clearInterval(timer);
-  }, [live, open, refresh, supported]);
+  }, [live, open, refresh, supported, tab]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || !fullscreen) return;
+      event.preventDefault();
+      setFullscreen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [fullscreen, open]);
 
   const entries = useMemo(() => {
     const byId = new Map<string, DebugLogEntry>();
@@ -122,9 +140,23 @@ export function DebugLogPanel() {
 
   useEffect(() => {
     if (filtered.length === 0) return;
-    if (!open || !live || !listRef.current) return;
+    if (
+      !open ||
+      tab !== "logs" ||
+      !live ||
+      !followLatestRef.current ||
+      !listRef.current
+    )
+      return;
     listRef.current.scrollTop = listRef.current.scrollHeight;
-  }, [filtered.length, live, open]);
+  }, [filtered.length, live, open, tab]);
+
+  const handleListScroll = () => {
+    const list = listRef.current;
+    if (!list) return;
+    followLatestRef.current =
+      list.scrollHeight - list.scrollTop - list.clientHeight <= 24;
+  };
 
   const toggleExpanded = (id: string) => {
     setExpanded((current) => {
@@ -139,11 +171,18 @@ export function DebugLogPanel() {
   return (
     <div className={`debug-log-root${open ? " is-open" : ""}`}>
       {open ? (
-        <aside className="debug-log-panel" aria-label={t("debugTitle")}>
+        <aside
+          className={`debug-log-panel${fullscreen ? " is-fullscreen" : ""}`}
+          aria-label={t("debugTitle")}
+        >
           <header className="debug-log-header">
             <div>
-              <strong>{t("debugTitle")}</strong>
-              <span>{tn("debugCount", entries.length)}</span>
+              <strong>{t("debugDiagnostics")}</strong>
+              <span>
+                {tab === "logs"
+                  ? tnPlain("debugCount", entries.length)
+                  : t("debugUsageSubtitle")}
+              </span>
             </div>
             <div className="debug-log-header-actions">
               <button
@@ -160,7 +199,10 @@ export function DebugLogPanel() {
                 className="debug-icon-button"
                 title={t("debugRefresh")}
                 aria-label={t("debugRefresh")}
-                onClick={() => void refresh()}
+                onClick={() => {
+                  if (tab === "logs") void refresh();
+                  else setUsageRefreshToken((value) => value + 1);
+                }}
               >
                 <RefreshCw
                   size={17}
@@ -170,125 +212,184 @@ export function DebugLogPanel() {
               <button
                 type="button"
                 className="debug-icon-button"
+                title={t(
+                  fullscreen ? "debugExitFullscreen" : "debugFullscreen",
+                )}
+                aria-label={t(
+                  fullscreen
+                    ? "debugExitFullscreenLabel"
+                    : "debugFullscreenLabel",
+                )}
+                onClick={() => setFullscreen((value) => !value)}
+              >
+                {fullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+              </button>
+              <button
+                type="button"
+                className="debug-icon-button"
                 title={t("debugClose")}
                 aria-label={t("debugClose")}
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  setFullscreen(false);
+                  setOpen(false);
+                }}
               >
                 <X size={18} />
               </button>
             </div>
           </header>
-          <div className="debug-log-toolbar">
-            <label className="debug-search">
-              <Search size={15} aria-hidden="true" />
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder={t("debugSearchPlaceholder")}
-                aria-label={t("debugSearch")}
-              />
-            </label>
-            <select
-              aria-label={t("debugSource")}
-              value={service}
-              onChange={(event) =>
-                setService(event.target.value as typeof service)
-              }
+          <div
+            className="debug-panel-tabs"
+            role="tablist"
+            aria-label={t("debugTabs")}
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "logs"}
+              onClick={() => setTab("logs")}
             >
-              <option value="all">{t("debugAllSources")}</option>
-              {Object.entries(SERVICE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <label className="debug-capture-level">
-              <span>{t("debugCapture")}</span>
-              <select
-                aria-label={t("debugCapture")}
-                value={captureLevel}
-                disabled={capturePending}
-                onChange={(event) => {
-                  const next = event.target.value as DiagnosticLogLevel;
-                  setCapturePending(true);
-                  void setDiagnosticLogLevel(next)
-                    .then(setCaptureLevel)
-                    .then(() => refresh())
-                    .catch(() => setReadState("error"))
-                    .finally(() => setCapturePending(false));
-                }}
-              >
-                <option value="error">Error</option>
-                <option value="warning">Warning</option>
-                <option value="info">Info</option>
-                <option value="debug">Debug</option>
-              </select>
-            </label>
+              {t("debugLogsTab")}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "usage"}
+              onClick={() => setTab("usage")}
+            >
+              {t("debugUsageTab")}
+            </button>
           </div>
-          <fieldset className="debug-levels">
-            <legend>{t("debugDisplay")}</legend>
-            {LEVELS.map((option) => (
-              <button
-                type="button"
-                key={option.value}
-                aria-pressed={level === option.value}
-                onClick={() => setLevel(option.value)}
-              >
-                {option.value === "all" ? t("debugAll") : option.label}
-              </button>
-            ))}
-          </fieldset>
-          <div className="debug-log-status" aria-live="polite">
-            <span>{tn("debugMatches", filtered.length)}</span>
-            <span>{live ? t("debugLive") : t("debugPaused")}</span>
-            {snapshot?.truncated ? <span>{t("debugTruncated")}</span> : null}
-            {readState === "error" ? (
-              <span className="debug-read-error">{t("debugReadError")}</span>
-            ) : null}
-          </div>
-          <div className="debug-log-list" ref={listRef}>
-            {filtered.length ? (
-              filtered.map((entry) => {
-                const isExpanded = expanded.has(entry.id);
-                return (
-                  <article
-                    className={`debug-log-row level-${entry.level}`}
-                    key={entry.id}
+          {tab === "logs" ? (
+            <div className="debug-log-content">
+              <div className="debug-log-toolbar">
+                <label className="debug-search">
+                  <Search size={15} aria-hidden="true" />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder={t("debugSearchPlaceholder")}
+                    aria-label={t("debugSearch")}
+                  />
+                </label>
+                <select
+                  aria-label={t("debugSource")}
+                  value={service}
+                  onChange={(event) =>
+                    setService(event.target.value as typeof service)
+                  }
+                >
+                  <option value="all">{t("debugAllSources")}</option>
+                  {Object.entries(SERVICE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <label className="debug-capture-level">
+                  <span>{t("debugCapture")}</span>
+                  <select
+                    aria-label={t("debugCapture")}
+                    value={captureLevel}
+                    disabled={capturePending}
+                    onChange={(event) => {
+                      const next = event.target.value as DiagnosticLogLevel;
+                      setCapturePending(true);
+                      void setDiagnosticLogLevel(next)
+                        .then(setCaptureLevel)
+                        .then(() => refresh())
+                        .catch(() => setReadState("error"))
+                        .finally(() => setCapturePending(false));
+                    }}
                   >
-                    <button
-                      type="button"
-                      className="debug-log-summary"
-                      onClick={() => toggleExpanded(entry.id)}
-                      aria-expanded={isExpanded}
-                    >
-                      {isExpanded ? (
-                        <ChevronDown size={14} />
-                      ) : (
-                        <ChevronRight size={14} />
-                      )}
-                      <time>{logTime(entry.timestamp, locale)}</time>
-                      <span className="debug-log-level">{entry.level}</span>
-                      <span className="debug-log-service">
-                        {SERVICE_LABELS[entry.service]}
-                      </span>
-                      <span className="debug-log-event">
-                        {entry.message || `${entry.component} · ${entry.event}`}
-                      </span>
-                      <span className="debug-log-outcome">{entry.outcome}</span>
-                    </button>
-                    {isExpanded ? (
-                      <pre>{JSON.stringify(entry, null, 2)}</pre>
-                    ) : null}
-                  </article>
-                );
-              })
-            ) : (
-              <p className="debug-log-empty">
-                {readState === "loading" ? t("debugLoading") : t("debugEmpty")}
-              </p>
-            )}
-          </div>
+                    <option value="error">Error</option>
+                    <option value="warning">Warning</option>
+                    <option value="info">Info</option>
+                    <option value="debug">Debug</option>
+                  </select>
+                </label>
+              </div>
+              <fieldset className="debug-levels">
+                <legend>{t("debugDisplay")}</legend>
+                {LEVELS.map((option) => (
+                  <button
+                    type="button"
+                    key={option.value}
+                    aria-pressed={level === option.value}
+                    onClick={() => setLevel(option.value)}
+                  >
+                    {option.value === "all" ? t("debugAll") : option.label}
+                  </button>
+                ))}
+              </fieldset>
+              <div className="debug-log-status" aria-live="polite">
+                <span>{tnPlain("debugMatches", filtered.length)}</span>
+                <span>{live ? t("debugLive") : t("debugPaused")}</span>
+                {snapshot?.truncated ? (
+                  <span>{t("debugTruncated")}</span>
+                ) : null}
+                {readState === "error" ? (
+                  <span className="debug-read-error">
+                    {t("debugReadError")}
+                  </span>
+                ) : null}
+              </div>
+              <div
+                className="debug-log-list"
+                ref={listRef}
+                onScroll={handleListScroll}
+              >
+                {filtered.length ? (
+                  filtered.map((entry) => {
+                    const isExpanded = expanded.has(entry.id);
+                    return (
+                      <article
+                        className={`debug-log-row level-${entry.level}`}
+                        key={entry.id}
+                      >
+                        <button
+                          type="button"
+                          className="debug-log-summary"
+                          onClick={() => toggleExpanded(entry.id)}
+                          aria-expanded={isExpanded}
+                        >
+                          {isExpanded ? (
+                            <ChevronDown size={14} />
+                          ) : (
+                            <ChevronRight size={14} />
+                          )}
+                          <time>{logTime(entry.timestamp, locale)}</time>
+                          <span className="debug-log-level">{entry.level}</span>
+                          <span className="debug-log-service">
+                            {SERVICE_LABELS[entry.service]}
+                          </span>
+                          <span className="debug-log-event">
+                            {entry.message ||
+                              `${entry.component} · ${entry.event}`}
+                          </span>
+                          <span className="debug-log-outcome">
+                            {entry.outcome}
+                          </span>
+                        </button>
+                        {isExpanded ? (
+                          <pre>{JSON.stringify(entry, null, 2)}</pre>
+                        ) : null}
+                      </article>
+                    );
+                  })
+                ) : (
+                  <p className="debug-log-empty">
+                    {readState === "loading"
+                      ? t("debugLoading")
+                      : t("debugEmpty")}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <ModelUsageView live={live} refreshToken={usageRefreshToken} />
+          )}
         </aside>
       ) : null}
       <button

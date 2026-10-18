@@ -218,6 +218,11 @@ export interface RecallUninstallPreview {
 declare global {
   interface Window {
     oneMemory?: {
+      getBuildInfo?(): {
+        version: string;
+        buildNumber: string;
+        commit: string;
+      };
       getLanguagePreference?(): Promise<LanguageSnapshot>;
       setLanguagePreference?(
         preference: LanguagePreference,

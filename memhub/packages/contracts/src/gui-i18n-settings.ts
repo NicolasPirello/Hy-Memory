@@ -186,8 +186,42 @@ export const settingsSpanishMessages = {
     "No se pudo leer el estado del modelo. Reintenta.",
   "模型状态刷新未成功，仍显示上次确认的模型状态；请重试。":
     "No se pudo actualizar el estado. Se muestra el último estado confirmado; reintenta.",
-  "模型配置暂时无法打开：正在处理上一次创建或测试，或本机存储暂时不可用。 请等待当前操作结束后重试；现有配置和原文不会被改动。":
-    "No se puede abrir la configuración: hay una creación o prueba pendiente, o el almacenamiento local no está disponible. Espera a que termine la operación y reintenta; no se modificarán la configuración ni los textos originales.",
+  "上次模型测试或创建还待核对，配置暂时不能改动。请先在下方模型配置区核对结果； 现有配置和原文不会被改动。":
+    "La última prueba o creación del modelo está pendiente de comprobar, así que la configuración no se puede modificar por ahora. Compruébala primero en la sección de configuración del modelo, más abajo; no se modificarán la configuración ni los textos originales.",
+  用模型沉淀记忆: "Generar memorias con el modelo",
+  "开启后，导入和同步到本机的会话会交给当前模型整理成记忆，会产生模型调用。 停止后不再调用模型、不再整理记忆，但会话仍会照常导入和保存；已排队的内容会留着，重新开启后继续。 模型配置始终保留，重新开启不需要重新填写。":
+    "Al activarlo, las conversaciones importadas y sincronizadas en este equipo se envían al modelo actual para convertirlas en memorias, lo que genera llamadas al modelo. Al detenerlo, ya no se llama al modelo ni se procesan memorias, pero las conversaciones se siguen importando y guardando; lo que está en cola se conserva y continúa al volver a activarlo. La configuración del modelo se conserva siempre; no hace falta volver a introducirla.",
+  "启用未能确认，仍显示上次确认的状态；请重试。":
+    "No se pudo confirmar la activación; se muestra el último estado confirmado. Reinténtalo.",
+  "停止未能确认，模型可能仍在整理记忆，请重试。":
+    "No se pudo confirmar la detención; es posible que el modelo siga procesando memorias. Reinténtalo.",
+  "当前安装还不能读取这个开关，请确认后台服务已启动后重试。":
+    "Esta instalación aún no puede leer este interruptor. Comprueba que el servicio en segundo plano esté activo y reinténtalo.",
+  关于: "Acerca de",
+  "此应用还没有读取授权，请先授权它的对话目录。":
+    "Esta aplicación aún no tiene permiso de lectura. Autoriza primero su carpeta de conversaciones.",
+  "此应用的读取授权已撤销，请重新授权。":
+    "Se revocó el permiso de lectura de esta aplicación. Vuelve a autorizarla.",
+  "此应用的对话目录已被重建，请重新授权。":
+    "La carpeta de conversaciones de esta aplicación se volvió a crear. Vuelve a autorizarla.",
+  "此应用的对话目录现在读不到，请确认应用已安装并产生过对话。":
+    "No se puede leer la carpeta de conversaciones de esta aplicación. Comprueba que esté instalada y que tenga conversaciones.",
+  "此应用的对话目录已变更，请按最新目录重新授权。":
+    "La carpeta de conversaciones de esta aplicación cambió. Vuelve a autorizarla con la carpeta actual.",
+  "此应用还没有读取授权，请先授权它的对话目录。完成后再开启持续同步。":
+    "Esta aplicación aún no tiene permiso de lectura. Autoriza primero su carpeta de conversaciones y después activa la sincronización continua.",
+  "此应用的读取授权已撤销，请重新授权。完成后再开启持续同步。":
+    "Se revocó el permiso de lectura de esta aplicación. Vuelve a autorizarla y después activa la sincronización continua.",
+  "此应用的对话目录已被重建，请重新授权。完成后再开启持续同步。":
+    "La carpeta de conversaciones de esta aplicación se volvió a crear. Vuelve a autorizarla y después activa la sincronización continua.",
+  "此应用的对话目录现在读不到，请确认应用已安装并产生过对话。完成后再开启持续同步。":
+    "No se puede leer la carpeta de conversaciones de esta aplicación. Comprueba que esté instalada y que tenga conversaciones, y después activa la sincronización continua.",
+  "此应用的对话目录已变更，请按最新目录重新授权。完成后再开启持续同步。":
+    "La carpeta de conversaciones de esta aplicación cambió. Vuelve a autorizarla con la carpeta actual y después activa la sincronización continua.",
+  "此应用的读取授权已失效，请重新授权后再开启持续同步。":
+    "El permiso de lectura de esta aplicación ya no es válido. Vuelve a autorizarla y después activa la sincronización continua.",
+  "此应用的授权或目录已变化，已按最新状态显示，请确认后再试。":
+    "El permiso o la carpeta de esta aplicación cambiaron. Se muestra el estado actual; compruébalo y vuelve a intentarlo.",
   模型配置表单: "Formulario de configuración del modelo",
   "部分运行状态暂时无法读取，当前显示最后读到的状态，请重试。":
     "Algunos estados no están disponibles. Se muestra la última lectura; reintenta.",

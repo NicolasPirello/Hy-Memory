@@ -4,6 +4,36 @@ import { AppMark } from "./app-mark";
 import { useOnboardingTranslation } from "./onboarding-language";
 import "./r6-import-progress.css";
 
+type Translate = ReturnType<typeof useOnboardingTranslation>["t"];
+
+function progressText(
+  job: ImportJob,
+  t: Translate,
+  locale: string,
+): string | null {
+  if (job.stored > 0)
+    return t("onboardingSavedMessages", {
+      count: job.stored.toLocaleString(locale),
+    });
+  if (job.discovered <= 0) return null;
+  const count = job.discovered.toLocaleString(locale);
+  if (job.status === "completed")
+    return t(
+      job.history_after
+        ? "onboardingScannedOutsideRange"
+        : "onboardingScannedNothingToSave",
+      { count },
+    );
+  if (job.status === "pending" || job.status === "running")
+    return t(
+      job.history_after
+        ? "onboardingScannedFilteringRecent"
+        : "onboardingScannedFiltering",
+      { count },
+    );
+  return t("onboardingScannedNotSaved", { count });
+}
+
 export function R6ImportProgress({
   sourceIds,
   sources,
@@ -88,8 +118,9 @@ export function R6ImportProgress({
           interrupted: "已中断",
           failed: "导入遇到问题",
           cancelled: "已取消",
-          completed: "已保存",
+          completed: "导入完成",
         };
+        const progress = job ? progressText(job, t, locale) : null;
         return (
           <article
             className="r6-import-progress-card"
@@ -106,18 +137,8 @@ export function R6ImportProgress({
               </div>
             </div>
             <h2>{source?.display_name ?? id}</h2>
-            {job && job.stored > 0 ? (
-              <p>
-                {t("onboardingSavedMessages", {
-                  count: job.stored.toLocaleString(locale),
-                })}
-              </p>
-            ) : job && job.discovered > 0 ? (
-              <p>
-                {t("onboardingScannedMessages", {
-                  count: job.discovered.toLocaleString(locale),
-                })}
-              </p>
+            {progress ? (
+              <p>{progress}</p>
             ) : noImportedHistory ? (
               <p>{text("没有可保存的历史对话")}</p>
             ) : null}

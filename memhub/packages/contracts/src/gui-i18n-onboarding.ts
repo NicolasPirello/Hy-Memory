@@ -183,11 +183,19 @@ export const onboardingSpanishMessages = {
   已暂停: "En pausa",
   已中断: "Interrumpida",
   导入遇到问题: "Problema de importación",
+  导入完成: "Importación completada",
   已取消: "Cancelada",
   已保存: "Guardada",
   onboardingAppProgress: "Progreso de importación de {name}",
   onboardingSavedMessages: "Mensajes guardados: {count}",
-  onboardingScannedMessages: "Mensajes examinados: {count}; guardando",
+  onboardingScannedOutsideRange:
+    "Mensajes examinados: {count}; no hay conversaciones dentro del periodo elegido",
+  onboardingScannedNothingToSave:
+    "Mensajes examinados: {count}; no hay conversaciones para guardar",
+  onboardingScannedFilteringRecent:
+    "Mensajes examinados: {count}; filtrando los últimos 3 días",
+  onboardingScannedFiltering: "Mensajes examinados: {count}; filtrando",
+  onboardingScannedNotSaved: "Mensajes examinados: {count}; aún sin guardar",
   没有可保存的历史对话: "No hay conversaciones del historial para guardar",
   状态待核对: "Estado pendiente de comprobar",
   读取授权不可用: "Autorización de lectura no disponible",
@@ -384,7 +392,12 @@ export const onboardingChineseMessages = {
   onboardingBatchResult: "已确认 {confirmed} 项，{failed} 项未确认。",
   onboardingAppProgress: "{name} 导入进度",
   onboardingSavedMessages: "已保存 {count} 条消息",
-  onboardingScannedMessages: "已扫描 {count} 条，正在保存",
+  onboardingScannedOutsideRange:
+    "已扫描 {count} 条，本次没有符合时间范围的对话",
+  onboardingScannedNothingToSave: "已扫描 {count} 条，本次没有可保存的对话",
+  onboardingScannedFilteringRecent: "已扫描 {count} 条，正在筛选最近 3 天",
+  onboardingScannedFiltering: "已扫描 {count} 条，正在筛选",
+  onboardingScannedNotSaved: "已扫描 {count} 条，尚未保存",
   onboardingReadErrors: " · {count} 条读取异常",
   onboardingSourcesSummary: "{names} 等 {count} 个应用",
   onboardingImportedConversations:
