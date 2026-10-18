@@ -62,10 +62,10 @@ export function SelectedMemoryDetail({
           ? "已被取代"
           : "状态待核对";
   const source =
-    evidence?.source_id === "one-memory-manual" && locale === "es"
-      ? "Añadida manualmente"
-      : evidence?.source_id === "memory-content-export" && locale === "es"
-        ? "Memoria existente importada"
+    evidence?.source_id === "one-memory-manual"
+      ? text("手动添加")
+      : evidence?.source_id === "memory-content-export"
+        ? text("导入的已有记忆")
         : sourceNameOr(sources, evidence?.source_id, text("来源待核对"));
   const dirty = page === "edit" && draft !== memory.content;
   useEffect(() => {
@@ -247,9 +247,7 @@ export function SelectedMemoryDetail({
       >
         <p className="selected-memory-status">
           {text(statusLabel)} ·{" "}
-          {locale === "es"
-            ? `Versión ${memory.revision}`
-            : `第 ${memory.revision} 版`}
+          {text("第 {revision} 版", { revision: memory.revision })}
         </p>
         <h3>{heading}</h3>
         {body && <p className="selected-memory-body">{body}</p>}
@@ -257,10 +255,10 @@ export function SelectedMemoryDetail({
           {text("来源")} {source} · {timestamp}
         </p>
         <p className="selected-memory-times">
-          {locale === "es" ? "Conversación: " : "对话时间 "}
+          {text("对话时间 ")}
           {clockStamp(conversationAt?.at ?? evidence?.created_at, locale)}
           {" · "}
-          {locale === "es" ? "Guardada: " : "沉淀时间 "}
+          {text("沉淀时间 ")}
           {clockStamp(memory.updated_at, locale)}
         </p>
         {!hideActions && (
@@ -281,10 +279,9 @@ export function SelectedMemoryDetail({
         <section className="selected-memory-evidence">
           <h4>{text("原始依据")}</h4>
           <small>
-            {text(author)} ·{" "}
-            {locale === "es" ? "Conversación original " : "原对话 "}
+            {text(author)} · {text("原对话 ")}
             {timestamp}
-            {locale === "es" ? ":" : "："}
+            {text("冒号")}
           </small>
           <blockquote>
             {evidence?.available
@@ -312,9 +309,7 @@ export function SelectedMemoryDetail({
             {detail.history.map((v) => (
               <li key={v.revision}>
                 <small>
-                  {locale === "es"
-                    ? `Versión ${v.revision}`
-                    : `第 ${v.revision} 版`}
+                  {text("第 {revision} 版", { revision: v.revision })}
                 </small>
                 <p>{v.content}</p>
               </li>

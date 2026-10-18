@@ -270,7 +270,9 @@ it("uses compact Spanish actions and preserves Chinese copy and permissions", as
   const navigation = screen.getByRole("navigation");
   expect(navigation.textContent).toContain("Conectar apps");
   expect(
-    screen.getByRole("button", { name: "Configurar modelo" }),
+    screen.getByRole("button", {
+      name: "Configurar un modelo para crear memorias",
+    }),
   ).toBeTruthy();
   expect(screen.getByText(/Importar no concede automáticamente/)).toBeTruthy();
   expect(

@@ -31,6 +31,8 @@ export const recoveryChineseMessages = {
   graphWidthConfirm: "就这么办",
   importUserProgress:
     "正在导入你的历史对话，已导入 {count} 个会话。记忆会陆续生成，你可以先正常使用。",
+  "importUserProgress.one":
+    "正在导入你的历史对话，已导入 {count} 个会话。记忆会陆续生成，你可以先正常使用。",
   importUserModel: "模型还没有配置好，新的对话暂时不会整理成记忆。",
   importUserIncomplete: "有些内容没有处理完成，请前往设置查看。",
   importUserSettings: "去设置",
@@ -40,6 +42,7 @@ export const recoveryChineseMessages = {
   diagnosticExportFailed: "诊断信息未能导出，请重试。",
   debugTitle: "Debug 日志",
   debugCount: "{count} 条，本次启动",
+  "debugCount.one": "{count} 条，本次启动",
   debugPause: "暂停实时刷新",
   debugResume: "继续实时刷新",
   debugRefresh: "立即刷新",
@@ -52,6 +55,7 @@ export const recoveryChineseMessages = {
   debugDisplay: "显示级别",
   debugAll: "全部",
   debugMatches: "{count} 条匹配",
+  "debugMatches.one": "{count} 条匹配",
   debugLive: "实时刷新",
   debugPaused: "已暂停",
   debugTruncated: "日志过多，已截断",
@@ -102,6 +106,8 @@ export const recoverySpanishMessages: Record<
   graphWidthConfirm: "Confirmar esta elección",
   importUserProgress:
     "Importando tus conversaciones anteriores: {count} conversaciones importadas. Las memorias aparecerán gradualmente; puedes seguir usando la aplicación.",
+  "importUserProgress.one":
+    "Importando tus conversaciones anteriores: {count} conversación importada. Las memorias aparecerán gradualmente; puedes seguir usando la aplicación.",
   importUserModel:
     "El modelo aún no está configurado; las conversaciones nuevas no se convertirán en memorias por ahora.",
   importUserIncomplete:
@@ -115,6 +121,7 @@ export const recoverySpanishMessages: Record<
     "No se pudo exportar el diagnóstico. Inténtalo de nuevo.",
   debugTitle: "Registros de depuración",
   debugCount: "{count} registros en este inicio",
+  "debugCount.one": "{count} registro en este inicio",
   debugPause: "Pausar actualización en vivo",
   debugResume: "Reanudar actualización en vivo",
   debugRefresh: "Actualizar ahora",
@@ -128,6 +135,7 @@ export const recoverySpanishMessages: Record<
   debugDisplay: "Nivel mostrado",
   debugAll: "Todos",
   debugMatches: "{count} coincidencias",
+  "debugMatches.one": "{count} coincidencia",
   debugLive: "Actualización en vivo",
   debugPaused: "En pausa",
   debugTruncated: "Demasiados registros; se truncaron",

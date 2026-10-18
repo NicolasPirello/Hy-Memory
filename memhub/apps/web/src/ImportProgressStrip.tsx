@@ -86,7 +86,7 @@ export function ImportProgressStrip({
   showProgressDetails = true,
   userFacing = false,
 }: ImportProgressStripProps) {
-  const { t, locale } = useGuiLanguage();
+  const { t, tn } = useGuiLanguage();
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<{
     epoch: number;
@@ -254,7 +254,7 @@ export function ImportProgressStrip({
       0,
     );
     const message = firstImport
-      ? t("importUserProgress", { count: imported.toLocaleString(locale) })
+      ? tn("importUserProgress", imported)
       : currentArrival?.phase === "model-required"
         ? t("importUserModel")
         : t("importUserIncomplete");

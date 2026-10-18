@@ -41,6 +41,54 @@ it("translates memory filters and detail affordances live without refetching", a
   localStorage.clear();
 });
 
+it("localiza la navegación de gobierno de la biblioteca", async () => {
+  setup();
+  delete window.oneMemory;
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, "es");
+  render(
+    <LanguageProvider>
+      <MemorySpace simplified />
+    </LanguageProvider>,
+  );
+  await screen.findByRole("heading", { name: "Memorias", level: 1 });
+  expect(
+    screen.getByRole("navigation", {
+      name: "Estado de las memorias",
+      hidden: true,
+    }),
+  ).toBeTruthy();
+  localStorage.clear();
+});
+
+it("localiza cola y estimación sin alterar las memorias", async () => {
+  setup();
+  delete window.oneMemory;
+  reads.processing.mockResolvedValue({
+    running: 1,
+    pending: 2,
+    fresh_pending: 1,
+    backlog_pending: 1,
+    in_flight_count: 1,
+    active_queue: 1,
+    seconds_per_completion: 60,
+    completed: 0,
+    blocked_stages: [],
+  });
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, "es");
+  render(
+    <LanguageProvider>
+      <MemorySpace />
+    </LanguageProvider>,
+  );
+  expect(
+    await screen.findByText(
+      /1 en procesamiento · 1 recientes pendientes · 1 del historial pendientes/,
+    ),
+  ).toBeTruthy();
+  expect(screen.getByText(/aprox. 2 minutos/)).toBeTruthy();
+  localStorage.clear();
+});
+
 const { reads } = vi.hoisted(() => ({
   reads: {
     memories: vi.fn(),

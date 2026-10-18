@@ -1,6 +1,5 @@
 /** GUI copy only: never apply this catalog to persisted memories or provider data. */
 export const settingsSpanishMessages = {
-  "请填写 API Key。": "Introduce la clave API.",
   "这里需要 API Key，不是网址。请填写服务方提供的密钥。":
     "Aquí se necesita una clave API, no una URL. Introduce la clave del proveedor.",
   "服务商拒绝了这个 API Key（401）。请确认密钥属于当前填写的服务地址。":
@@ -26,8 +25,6 @@ export const settingsSpanishMessages = {
     "Configuración guardada; la activación aún no está confirmada. Compruébala y reintenta.",
   "配置尚未完成测试和启用，请核对后重试。":
     "La prueba y activación no se completaron. Comprueba la configuración y reintenta.",
-  "配置未保存，请检查模型地址和参数后重试；已填写内容保留。":
-    "No se guardó la configuración. Comprueba la dirección y los parámetros y reintenta; se conserva lo introducido.",
   "配置尚未保存成功，已填写内容保留，可核对后重试。":
     "No se confirmó el guardado. Se conserva lo introducido; compruébalo y reintenta.",
   "只需配置生成模型。向量嵌入已内置在本机，不为 System 1、System 2 分开选模型。":
@@ -37,12 +34,9 @@ export const settingsSpanishMessages = {
   "上次模型测试结果待核对，暂不修改或启用配置。":
     "El resultado de la última prueba está pendiente. No se modificará ni habilitará la configuración por ahora.",
   核对测试结果: "Comprobar resultado de la prueba",
-  "未找到上次创建记录。确认放弃旧记录后可重新配置；系统不会自动重试。":
-    "No se encontró el registro de la última creación. Puedes descartarlo y volver a configurar; no se reintentará automáticamente.",
   "上次模型创建结果待核对，暂不开始新的操作。":
     "La última creación está pendiente de comprobar. No se iniciarán nuevas operaciones por ahora.",
   核对创建结果: "Comprobar resultado de la creación",
-  "放弃旧记录，重新配置": "Descartar registro anterior y configurar de nuevo",
   "配置已保存，正在测试连接…": "Configuración guardada. Probando conexión…",
   "连接通过，正在启用模型…": "Conexión correcta. Habilitando modelo…",
   刷新配置列表: "Actualizar configuraciones",
@@ -112,7 +106,6 @@ export const settingsSpanishMessages = {
     "Desactivar razonamiento (envía thinking-off a proveedores compatibles)",
   保存修改: "Guardar cambios",
   保存配置: "Guardar configuración",
-  "正在测试连接…": "Probando conexión…",
   "正在启用配置…": "Habilitando configuración…",
   测试并完成配置: "Probar y completar configuración",
   保存并测试启用: "Guardar, probar y habilitar",
@@ -162,60 +155,19 @@ export const settingsSpanishMessages = {
   结构化输出未通过: "La salida estructurada no superó la prueba",
   "需要填写 Embedding 模型": "Es necesario indicar un modelo de embeddings",
   "Embedding 模型不可用": "Modelo de embeddings no disponible",
-  "操作已完成，但配置列表暂未刷新。已保留操作回执，请刷新核对，不要重复保存。":
-    "La operación terminó, pero no se actualizó la lista. Se conserva la confirmación; actualiza para comprobar sin volver a guardar.",
-  "暂时无法刷新模型配置，已确认的配置仍保留。请重试刷新。":
-    "No se pudo actualizar la configuración. Se conservan las configuraciones confirmadas. Reintenta la actualización.",
   "请先核对上次模型测试结果，暂不修改或启用配置。":
     "Comprueba primero el resultado de la última prueba. No modifiques ni habilites la configuración todavía.",
-  "创建结果仍待核对，不会重复创建。请稍后再次核对。":
-    "La creación sigue pendiente de comprobar; no se repetirá. Vuelve a comprobar más tarde.",
   "本地恢复记录已变化，仍保持锁定。请重新打开后核对。":
     "El registro local de recuperación cambió y sigue bloqueado. Vuelve a abrir para comprobarlo.",
-  "已发现模型配置，旧创建记录仍保留。请先核对已有配置。":
-    "Se encontró la configuración; el registro anterior se conserva. Comprueba primero la configuración existente.",
-  "旧创建记录尚未安全解除，配置仍保持锁定。请重新核对。":
-    "No se pudo descartar de forma segura el registro anterior. La configuración sigue bloqueada; compruébala de nuevo.",
-  "创建结果尚未确认，请核对已保存结果，不要重复提交。":
-    "La creación no está confirmada. Comprueba lo guardado sin volver a enviarlo.",
-  "模型配置已变化，旧测试结果不会用于启用，请重新核对配置。":
-    "La configuración cambió. La prueba anterior no se usará para habilitarla; compruébala de nuevo.",
-  "暂时无法核对测试服务，本次未发送测试，请恢复连接后重试。":
-    "No se pudo comprobar el servicio y no se envió la prueba. Recupera la conexión y reintenta.",
-  "另一个模型的测试结果尚未确认，请先在该模型上核对测试结果。":
-    "La prueba de otro modelo está pendiente. Comprueba primero su resultado.",
-  "测试结果尚未确认。再次点击测试连接将核对原操作，不会重复发送测试。":
-    "La prueba aún no está confirmada. Al pulsar de nuevo se comprobará la operación original, sin enviar otra prueba.",
-  "请先点击测试连接，通过后再设为当前模型。":
-    "Prueba la conexión primero. Selecciona el modelo actual después de superar la prueba.",
-  "这是当前正在使用的模型，请先切换到别的模型再删除。":
-    "Este es el modelo actual. Selecciona otro antes de eliminarlo.",
-  "模型配置操作未成功，请核对输入后重试。":
-    "La operación de configuración falló. Comprueba los datos y reintenta.",
   测试结果: "Resultado de la prueba",
   "暂不支持一键插入：它没有 MCP 通道，无法发放可撤销的记忆凭证。":
-    "No admite conexión directa: no tiene canal MCP y no se pueden emitir credenciales revocables de memoria.",
-  "它没有 MCP 通道，无法发放可撤销的记忆凭证":
-    "No tiene canal MCP y no se pueden emitir credenciales revocables de memoria",
-  当前安装不支持一键插入: "Esta instalación no admite conexión directa",
-  桌面端的连接组件不可用:
-    "El componente de conexión del escritorio no está disponible",
-  安装后没有拿到安装回执: "No se recibió una confirmación de instalación",
-  记忆使用权限没有获批: "No se aprobó el permiso de uso de memorias",
-  配置文件被改过: "El archivo de configuración cambió",
-  "有无法确认的残留，需要人工核对":
-    "Hay restos sin confirmar que requieren comprobación manual",
-  权限存储暂不可用: "El almacén de permisos no está disponible",
+    "No admite la conexión con un clic: no tiene canal MCP y no se pueden emitir credenciales revocables de memoria.",
   应用控制通道暂不可用:
     "El canal de control de la aplicación no está disponible",
-  "请先把 MemHub 拖到“应用程序”文件夹，再接入应用":
-    "Arrastra MemHub a Aplicaciones antes de conectar aplicaciones",
-  本机运行时暂不可用: "El runtime local no está disponible",
-  桌面端读取接入状态超时:
-    "Se agotó el tiempo de lectura del estado de conexión",
-  "当前接入状态也未能重新读取，显示的可能不是最新状态。":
-    "Tampoco se pudo volver a leer la conexión; el estado mostrado podría no estar actualizado.",
-  原因: "Motivo",
+  // Fragments appended to an app failure; Spanish carries its own separator.
+  appFailureReason: " Motivo: {reason}.",
+  appFailureReread:
+    " Tampoco se pudo volver a leer la conexión; el estado mostrado podría no estar actualizado.",
   模型: "Modelo",
   连接其他应用: "Conectar otras aplicaciones",
   帮助与诊断: "Ayuda y diagnóstico",
@@ -237,8 +189,6 @@ export const settingsSpanishMessages = {
   "模型配置暂时无法打开：正在处理上一次创建或测试，或本机存储暂时不可用。 请等待当前操作结束后重试；现有配置和原文不会被改动。":
     "No se puede abrir la configuración: hay una creación o prueba pendiente, o el almacenamiento local no está disponible. Espera a que termine la operación y reintenta; no se modificarán la configuración ni los textos originales.",
   模型配置表单: "Formulario de configuración del modelo",
-  "修改结果尚未确认，正在重新读取当前设置。":
-    "El cambio aún no está confirmado. Se está volviendo a leer la configuración actual.",
   "部分运行状态暂时无法读取，当前显示最后读到的状态，请重试。":
     "Algunos estados no están disponibles. Se muestra la última lectura; reintenta.",
   "当前安装还不能设置登录后后台启动。":
@@ -262,7 +212,6 @@ export const settingsSpanishMessages = {
   退出界面: "Cerrar interfaz",
   应用详情: "Detalles de la aplicación",
   返回应用: "Volver a Aplicaciones",
-  应用设置: "Configuración de la aplicación",
   同步开关: "Sincronización",
   "开启后处理历史待办，并持续接收此应用的新会话。":
     "Al activar, procesa el historial pendiente y recibe las nuevas conversaciones de esta aplicación.",
@@ -270,7 +219,7 @@ export const settingsSpanishMessages = {
     "Leyendo conversaciones existentes. El primer inicio puede tardar uno o dos minutos; no vuelvas a pulsar.",
   "将补充冻结期间的新对话；原有 pending Job 继续处理。":
     "Se incorporarán las conversaciones del periodo pausado; los trabajos pendientes existentes seguirán procesándose.",
-  一键插入应用: "Conectar aplicación",
+  一键插入应用: "Conectar con un clic",
   "安装记忆连接，并默认允许此应用使用已授权记忆。":
     "Instala la conexión y permite a esta aplicación usar las memorias autorizadas.",
   允许使用记忆: "Permitir el uso de memorias",
@@ -302,24 +251,19 @@ export const settingsSpanishMessages = {
   appRestart:
     "La herramienta de memorias no está en la conversación actual de {name}. Cierra completamente {name} y vuelve a abrirla; aparecerá en una conversación nueva.",
   appConnectFailed:
-    "No se completó la conexión de esta aplicación. Las demás no se ven afectadas. {reason}",
+    "No se completó la conexión de esta aplicación. Las demás no se ven afectadas.{reason}",
   appDisconnectFailed:
-    "No se pudo eliminar la conexión ni revocar el permiso. {name} aún puede usar memorias. Reintenta. {reason}",
+    "No se pudo eliminar la conexión ni revocar el permiso. {name} aún puede usar memorias. Reintenta.{reason}",
   appPermissionFailed:
-    "No se pudo confirmar el permiso de uso de memorias de esta aplicación. Reintenta. {reason}",
+    "No se pudo confirmar el permiso de uso de memorias de esta aplicación. Reintenta.{reason}",
   appRevokedModified:
     "Se revocó el permiso; {name} ya no puede consultar memorias. El archivo de configuración cambió y MemHub no lo eliminó automáticamente. Quita manualmente la conexión de MemHub.",
   appRevokedRetained:
     "Se revocó el permiso; {name} ya no puede consultar memorias. No se eliminó el archivo de conexión. Compruébalo de nuevo.",
   appRevokedReview:
     "Se revocó el permiso; {name} ya no puede consultar memorias. No se pudo confirmar la eliminación completa de la conexión. Comprueba manualmente: {paths}.",
-  appRevoked: "Se revocó el permiso; {name} ya no puede consultar memorias. ",
   appRemovalReview:
     "No se pudo confirmar la eliminación completa de la conexión. Comprueba manualmente: {paths}.",
-  "配置文件被改过，MemHub 没有自动删除；请手动移除其中的 MemHub 连接。":
-    "El archivo de configuración cambió y MemHub no lo eliminó automáticamente. Quita manualmente la conexión de MemHub.",
-  "连接文件没有移除，请重新核对。":
-    "No se eliminó el archivo de conexión. Compruébalo de nuevo.",
   "Cursor 的连接凭证已更新。请完全退出并重新打开 Cursor，再开始新对话。":
     "Las credenciales de conexión de Cursor se actualizaron. Cierra completamente Cursor y vuelve a abrirlo; después, inicia una conversación nueva.",
   连接其他工具: "Conectar otras herramientas",
@@ -349,8 +293,6 @@ export const settingsSpanishMessages = {
   记忆库分页: "Paginación de la biblioteca de memorias",
   上一页: "Página anterior",
   下一页: "Página siguiente",
-  memoryPageTotal: "{count} memorias en total",
-  memoryPageNumber: "Página {page}",
 } as const;
 
 const chineseOverrides: Partial<
@@ -364,16 +306,15 @@ const chineseOverrides: Partial<
   appDisconnectFailed:
     "连接未能移除，记忆权限也未能撤销，{name} 仍可使用记忆，请重试。{reason}",
   appPermissionFailed: "此应用的记忆使用权限未能确认，请重试。{reason}",
+  appFailureReason: "原因：{reason}。",
+  appFailureReread: "当前接入状态也未能重新读取，显示的可能不是最新状态。",
   appRevokedModified:
     "已撤销记忆权限，{name} 已查不到记忆。配置文件被改过，MemHub 没有自动删除；请手动移除其中的 MemHub 连接。",
   appRevokedRetained:
     "已撤销记忆权限，{name} 已查不到记忆。连接文件没有移除，请重新核对。",
   appRevokedReview:
     "已撤销记忆权限，{name} 已查不到记忆。但无法确认连接已全部移除，需要你手动核对：{paths}。",
-  appRevoked: "已撤销记忆权限，{name} 已查不到记忆。",
   appRemovalReview: "无法确认连接已全部移除，需要你手动核对：{paths}。",
-  memoryPageTotal: "共 {count} 条",
-  memoryPageNumber: "第 {page} 页",
 };
 export const settingsChineseMessages = Object.fromEntries(
   Object.keys(settingsSpanishMessages).map((key) => [

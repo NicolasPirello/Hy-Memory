@@ -43,7 +43,7 @@ export function FirstUseGuide({
   onSources(): void;
   onClose(): void;
 }) {
-  const { t, locale } = useGuiLanguage();
+  const { t, tn, locale } = useGuiLanguage();
   const [scene, setScene] = useState<GuideScenario>("same");
   const [route, setRoute] = useState<GuideRoute>("context");
   const [memories, setMemories] = useState<GovernedMemory[]>([]);
@@ -181,7 +181,7 @@ export function FirstUseGuide({
   const displaySourceLabel =
     sourceIds
       .map((id) => (id === "one-memory-manual" ? t("guideManual") : nameOf(id)))
-      .join(locale === "es" ? ", " : "、") || t("guideOriginalApp");
+      .join(t("guideListSeparator")) || t("guideOriginalApp");
   const draft =
     available && detail
       ? draftForScenario(scene, effectiveRoute, topic, detail, sourceLabel)
@@ -327,12 +327,10 @@ export function FirstUseGuide({
       </p>
       {importedMessages > 0 && (
         <p className="first-use-receipt">
-          {t("guideSaved", { count: importedMessages.toLocaleString(locale) })}
+          {tn("guideSaved", importedMessages)}
           {loading
             ? t("guideReadingMemories")
-            : t("guideLoaded", {
-                count: memories.length.toLocaleString(locale),
-              })}
+            : tn("guideLoaded", memories.length)}
           {t("guideSeparate")}
         </p>
       )}
@@ -414,9 +412,7 @@ export function FirstUseGuide({
               </select>
             </label>
             <p className="first-use-meta">
-              {t("guideLoadedScope", {
-                count: memories.length.toLocaleString(locale),
-              })}
+              {tn("guideLoadedScope", memories.length)}
             </p>
             {detailLoading ? (
               <p role="status">{t("guideCheckingEvidence")}</p>
@@ -441,9 +437,7 @@ export function FirstUseGuide({
                 </p>
                 <details className="first-use-evidence" open>
                   <summary>
-                    {t("guideEvidence", {
-                      count: detail.evidence.length.toLocaleString(locale),
-                    })}
+                    {tn("guideEvidence", detail.evidence.length)}
                   </summary>
                   {detail.evidence.map((item) => (
                     <article key={item.evidence_id}>

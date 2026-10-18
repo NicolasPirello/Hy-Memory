@@ -991,7 +991,7 @@ function SourceList({
   status?: string;
   selection: ReactNode;
 }) {
-  const { t } = useOnboardingTranslation();
+  const { t, tnPlain } = useOnboardingTranslation();
   const list = useRef<HTMLUListElement>(null);
   const [more, setMore] = useState(0);
   const measure = useCallback(() => {
@@ -1040,7 +1040,7 @@ function SourceList({
         <span data-scroll-hint={!status && more > 0 ? "true" : "false"}>
           {status ??
             (more > 0
-              ? t("onboardingMoreApps", { count: more })
+              ? tnPlain("onboardingMoreApps", more)
               : count > 3
                 ? t("onboardingAllApps", { count })
                 : "")}

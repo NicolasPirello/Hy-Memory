@@ -13,6 +13,7 @@ export const onboardingSpanishMessages = {
   "这张卡刚被改过。刷新一下再试，免得覆盖掉别处的改动。":
     "Esta configuración cambió. Actualiza antes de reintentar para no sobrescribir otros cambios.",
   onboardingModelOperationFailed: "La operación no se completó: {code}",
+  onboardingModelSkipDestination: "Omitir y entrar a Aplicaciones",
   首次设置进度: "Progreso de la configuración inicial",
   导入历史: "Importar historial",
   连接应用: "Conectar apps",
@@ -80,6 +81,8 @@ export const onboardingSpanishMessages = {
   "少一些重复交代，多一些理解。":
     "Menos explicaciones repetidas, más comprensión.",
   onboardingMoreApps: "Desplázate para ver más · Quedan {count} aplicaciones",
+  "onboardingMoreApps.one":
+    "Desplázate para ver más · Queda {count} aplicación",
   onboardingAllApps: "Se muestran las {count} aplicaciones",
   默认位置: "Ubicación predeterminada",
   自定义位置: "Ubicación personalizada",
@@ -139,7 +142,7 @@ export const onboardingSpanishMessages = {
   停止后续操作: "Detener las operaciones siguientes",
   暂停导入: "Pausar importación",
   继续导入: "Reanudar importación",
-  "配置模型，沉淀记忆": "Configurar modelo",
+  "配置模型，沉淀记忆": "Configurar un modelo para crear memorias",
   导入与原文: "Importación y contenido original",
   "本次导入已结束。已保存的对话无需重复导入。":
     "Esta importación ha terminado. No es necesario volver a importar las conversaciones guardadas.",
@@ -302,8 +305,6 @@ export const onboardingSpanishMessages = {
     "La conexión falló. Comprueba el modelo, la clave y el destinatario.",
   "配置或测试结果暂未确认，请核对后重试。":
     "El resultado de la configuración o la prueba aún no está confirmado. Compruébalo antes de reintentar.",
-  "模型或内容权限未能确认启用，请在设置中核对。":
-    "No se pudo confirmar la habilitación del modelo o del permiso de contenido. Compruébalo en Configuración.",
   自定义兼容服务: "Servicio compatible personalizado",
   所选连接已启用: "Se habilitaron las conexiones seleccionadas",
   本次未选择应用连接: "No se seleccionaron conexiones de aplicaciones",
@@ -373,6 +374,7 @@ export const onboardingChineseMessages = {
     "{success} 个应用已接入，{failed} 个未完成：{names}。可进入应用后单独处理。",
   onboardingImportHistory: "导入 {name} 历史",
   onboardingMoreApps: "向下查看更多 · 还有 {count} 个应用",
+  "onboardingMoreApps.one": "向下查看更多 · 还有 {count} 个应用",
   onboardingAllApps: "已显示全部 {count} 个应用",
   onboardingImportRefused: "尚未获准导入（{reason}）。请核对来源后重试。",
   onboardingConfirmHistory: "确认这是 {name} 的历史位置",
@@ -389,4 +391,5 @@ export const onboardingChineseMessages = {
     "已导入 {count} 条对话；来源开关继续控制之后同步到本机的内容。",
   onboardingIntegerRange: "请输入 {min} 至 {max} 的整数。",
   onboardingModelOperationFailed: "操作没成功：{code}",
+  onboardingModelSkipDestination: "跳过后进入应用",
 } as const;

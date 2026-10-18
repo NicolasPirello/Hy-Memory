@@ -1,3 +1,5 @@
+import { type GuiLocale, translate } from "@one-memory/contracts/gui-i18n";
+
 /**
  * One clock format for every user-facing timestamp.
  *
@@ -16,10 +18,10 @@
  */
 export function clockStamp(
   value: string | null | undefined,
-  locale = "zh-CN",
+  locale: GuiLocale = "zh-CN",
 ): string {
   if (!value || !Number.isFinite(Date.parse(value)))
-    return locale === "es" ? "Hora desconocida" : "时间未知";
+    return translate(locale, "clock.unknown");
   const date = new Date(value);
   const now = new Date();
   const clock = new Intl.DateTimeFormat(locale, {
@@ -31,7 +33,7 @@ export function clockStamp(
     date.getMonth() === now.getMonth() &&
     date.getDate() === now.getDate()
   )
-    return `${locale === "es" ? "Hoy" : "今天"} ${clock}`;
+    return translate(locale, "clock.today", { clock });
   return new Intl.DateTimeFormat(locale, {
     month: "2-digit",
     day: "2-digit",

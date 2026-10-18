@@ -75,6 +75,10 @@ export function OnboardingModelStep(props: OnboardingModelStepProps) {
   const { text, t, locale } = useOnboardingTranslation();
   const { draft, advancedOpen, onDraftChange, fieldErrors = {}, phase } = props;
   const id = useId();
+  // The Chinese label already names the destination; the shorter Spanish one
+  // ("Omitir por ahora") needs it as a description for assistive technology.
+  const skipDestination =
+    locale === "es" ? t("onboardingModelSkipDestination") : "";
   const fields = useRef<HTMLElement>(null);
   const advancedToggle = useRef<HTMLButtonElement>(null);
   const restoreToggleFocus = useRef(false);
@@ -236,14 +240,14 @@ export function OnboardingModelStep(props: OnboardingModelStepProps) {
               )}
             </p>
             <div className="onboarding-model-footer-actions">
-              {locale === "es" && (
+              {skipDestination && (
                 <span id={`${id}-skip-destination`} hidden>
-                  Omitir y entrar a Aplicaciones
+                  {skipDestination}
                 </span>
               )}
               <R6Button
                 aria-describedby={
-                  locale === "es" ? `${id}-skip-destination` : undefined
+                  skipDestination ? `${id}-skip-destination` : undefined
                 }
                 disabled={locked}
                 onClick={() => {

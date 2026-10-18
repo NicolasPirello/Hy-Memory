@@ -1,3 +1,4 @@
+import { connectionSpanishMessages } from "./gui-i18n-connection.js";
 import { chineseMessages, spanishMessages } from "./gui-i18n-messages.js";
 
 export type LanguagePreference = "system" | "zh-CN" | "es";
@@ -48,6 +49,34 @@ export function resolveGuiLocale(
   }
 }
 
+/** Tell catalog keys from arbitrary text (names, paths, codes, imported text). */
+export function isMessageKey(value: string): value is MessageKey {
+  return Object.hasOwn(chineseMessages, value);
+}
+
+/**
+ * Translate a message whose catalog key depends on a Spanish count: use the
+ * `${key}.one` variant when it exists and count is exactly 1.
+ */
+export function translateCount(
+  locale: GuiLocale,
+  key: MessageKey,
+  count: number,
+  params?: Record<string, string | number>,
+): string {
+  const one = `${key}.one`;
+  const chosen = count === 1 && isMessageKey(one) ? one : key;
+  return translate(locale, chosen, params);
+}
+
+/**
+ * A count for copy whose Chinese text historically shows the bare number:
+ * Spanish groups digits, Chinese stays byte-for-byte as before.
+ */
+export function plainCount(locale: GuiLocale, value: number): string | number {
+  return locale === "es" ? new Intl.NumberFormat(locale).format(value) : value;
+}
+
 /**
  * Return plain text, falling back to Chinese for untranslated Spanish messages.
  * Replace own {name} parameters once; missing parameters remain unchanged.
@@ -61,10 +90,47 @@ export function translate(
   const message =
     (locale === "es" ? spanishMessages[key] : undefined) ??
     chineseMessages[key];
-  if (!params) return message;
+  return params ? interpolate(message, params) : message;
+}
+
+/** Single pass: substituted values are never scanned again for placeholders. */
+function interpolate(
+  message: string,
+  params: Record<string, string | number>,
+): string {
   return message.replace(
     /\{([A-Za-z_][A-Za-z0-9_]*)\}/g,
     (placeholder, name: string) =>
       Object.hasOwn(params, name) ? String(params[name]) : placeholder,
   );
+}
+
+/** Installation material from the desktop bridge; snippets are opaque. */
+export interface ConnectionMaterial {
+  mcp: string;
+  shell: string | null;
+  /** Chinese prompt rendered by host-bridge; returned unchanged for zh-CN. */
+  prompt: string;
+}
+
+/**
+ * Connection prompt in the interface language. Chinese is the bridge's own
+ * prompt, byte for byte. Spanish fills the catalog template; `mcp` and `shell`
+ * are inserted once and verbatim, never parsed, escaped or translated.
+ */
+export function connectionPrompt(
+  locale: GuiLocale,
+  material: ConnectionMaterial,
+): string {
+  if (locale !== "es") return material.prompt;
+  const shellBlock =
+    material.shell === null || material.shell === ""
+      ? ""
+      : interpolate(connectionSpanishMessages["connection.promptShell"], {
+          shell: material.shell,
+        });
+  return interpolate(connectionSpanishMessages["connection.prompt"], {
+    mcp: material.mcp,
+    shellBlock,
+  });
 }

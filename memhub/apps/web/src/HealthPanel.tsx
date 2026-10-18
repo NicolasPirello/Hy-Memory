@@ -18,13 +18,11 @@ import { refreshRecallHosts } from "./host-state";
 import { memoryText } from "./memory-language";
 import {
   blockReasonLabel,
-  retryingBlockLabel,
   splitBlockedStages,
   taskKindLabel,
 } from "./memory-processing-labels";
 import { subscribePoll } from "./poll-scheduler";
 import { R6Button, R6Switch } from "./R6Controls";
-import { LINK_WORDING } from "./recall-host-wording";
 import type { useImportSources } from "./use-import-sources";
 
 type ImportState = ReturnType<typeof useImportSources>;
@@ -100,10 +98,11 @@ async function readHosts() {
 }
 
 function ReadTime({ label, value }: { label: string; value: string }) {
+  const { locale } = useGuiLanguage();
   return (
     <p className="health-stamp">
       {label}
-      <time dateTime={value}>{clockStamp(value)}</time>
+      <time dateTime={value}>{clockStamp(value, locale)}</time>
     </p>
   );
 }
@@ -148,7 +147,7 @@ function ReadReceipt({
  * the table the originating screen already uses.
  */
 export function HealthPanel({ imports }: { imports: ImportState }) {
-  const { t, locale } = useGuiLanguage();
+  const { t, tn, tnPlain, locale } = useGuiLanguage();
   const n = (value: number) => value.toLocaleString(locale);
   const [detailedLogging, setDetailedLoggingState] = useState(false);
   const [detailedLoggingPending, setDetailedLoggingPending] = useState(false);
@@ -332,7 +331,7 @@ export function HealthPanel({ imports }: { imports: ImportState }) {
               <>
                 <p>
                   {backgroundRead.pending || backgroundRead.failedAt
-                    ? `${t("healthPrevious")}${locale === "zh-CN" ? "：" : ": "}`
+                    ? t("healthPreviousPrefix")
                     : ""}
                   {backgroundVerdict(backgroundRead.value.state, locale)}
                 </p>
@@ -412,9 +411,7 @@ export function HealthPanel({ imports }: { imports: ImportState }) {
                 <div>
                   <dt>{t("healthOutput")}</dt>
                   <dd>
-                    {t("healthMemories", {
-                      count: n(processing.metrics.governed_memories),
-                    })}
+                    {tn("healthMemories", processing.metrics.governed_memories)}
                   </dd>
                 </div>
                 <div>
@@ -446,11 +443,7 @@ export function HealthPanel({ imports }: { imports: ImportState }) {
                   ),
                 )}
                 {retrying ? (
-                  <li>
-                    {locale === "zh-CN"
-                      ? retryingBlockLabel(retrying)
-                      : t("healthRetrying", { count: n(retrying) })}
-                  </li>
+                  <li>{tnPlain("healthRetrying", retrying)}</li>
                 ) : null}
               </ul>
             ) : !processingRead.failedAt && !processingRead.pending ? (
@@ -477,7 +470,7 @@ export function HealthPanel({ imports }: { imports: ImportState }) {
                     <dt>{host.label}</dt>
                     <dd>
                       {hostsRead.failedAt || hostsRead.pending
-                        ? `${t("healthPrevious")}${locale === "zh-CN" ? "：" : ": "}`
+                        ? t("healthPreviousPrefix")
                         : ""}
                       {hostVerdict(host, locale)}
                     </dd>
@@ -540,13 +533,6 @@ export function HealthPanel({ imports }: { imports: ImportState }) {
 /** A host with no self-check on record has not been shown to work, and the
  * install flow's own wording for that is 未接通. */
 function hostVerdict(host: RecallHostStatus, locale: GuiLocale): string {
-  if (locale === "zh-CN") {
-    if (!host.installed) return LINK_WORDING.unreachable;
-    const state = host.selfCheck?.state;
-    return (
-      (state ? LINK_WORDING[state] : undefined) ?? LINK_WORDING.unreachable
-    );
-  }
   return translate(
     locale,
     !host.installed

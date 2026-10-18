@@ -578,6 +578,41 @@ it("warns only after three consecutive timeouts and keeps them out of app rows",
     expect(screen.queryByRole("button", { name: "查看记录" })).toBeNull();
   }
 });
+it("shows the consecutive-timeout warning in Spanish with the host name", async () => {
+  history.mockResolvedValue({
+    available: true,
+    recording_error: false,
+    items: Array.from({ length: 3 }, (_, index) => ({
+      event_id: `timeout-es-${index}`,
+      host_id: "workbuddy",
+      tool: "om_recall",
+      state: "timed_out",
+      occurred_at: new Date(Date.now() - index * 1000).toISOString(),
+      memory_count: 0,
+      raw_count: 0,
+      references: [],
+    })),
+  });
+  Object.assign(window.oneMemory ?? {}, {
+    getLanguagePreference: vi
+      .fn()
+      .mockResolvedValue({ preference: "es", locale: "es", revision: 1 }),
+    onLanguagePreferenceChanged: vi.fn(() => () => {}),
+  });
+  render(
+    <LanguageProvider>
+      <ApplicationsHome
+        imports={imports}
+        onManage={() => {}}
+        onMemories={() => {}}
+        onSettings={() => {}}
+        onCalls={() => {}}
+      />
+    </LanguageProvider>,
+  );
+  const warning = await screen.findByText(/Las últimas consultas de WorkBuddy/);
+  expect(warning.textContent).not.toMatch(/[\u4e00-\u9fff]/);
+});
 it("uses live-sync success time for an application row", async () => {
   liveSync.mockResolvedValue([
     {

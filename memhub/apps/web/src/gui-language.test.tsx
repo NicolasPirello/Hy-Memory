@@ -222,3 +222,40 @@ it("does not allow a late write reply to overwrite a newer native event", async 
   );
   expect(screen.getByText("zh-CN:zh-CN")).toBeTruthy();
 });
+
+it("groups counts in Chinese only where tn asks for it, never with tnPlain", () => {
+  function Counts() {
+    const { tn, tnPlain } = useGuiLanguage();
+    return (
+      <>
+        <p>{tn("healthMemories", 12345)}</p>
+        <p>{tnPlain("healthRetrying", 12345)}</p>
+        <p>{tnPlain("healthRetrying", 1)}</p>
+      </>
+    );
+  }
+  const view = (stored: string | null) => {
+    if (stored) localStorage.setItem(LANGUAGE_STORAGE_KEY, stored);
+    const { container, unmount } = render(
+      <LanguageProvider>
+        <Counts />
+      </LanguageProvider>,
+    );
+    const lines = [...container.querySelectorAll("p")].map(
+      (p) => p.textContent,
+    );
+    unmount();
+    localStorage.clear();
+    return lines;
+  };
+  expect(view(null)).toEqual([
+    "12,345 条记忆",
+    "12345 条这次没能整理成功，正在重试",
+    "1 条这次没能整理成功，正在重试",
+  ]);
+  expect(view("es")).toEqual([
+    "12.345 memorias",
+    "12.345 no se pudieron procesar esta vez; reintentando",
+    "1 no se pudo procesar esta vez; reintentando",
+  ]);
+});

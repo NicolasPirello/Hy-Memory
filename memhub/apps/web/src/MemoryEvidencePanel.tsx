@@ -21,7 +21,7 @@ export function MemoryEvidencePanel({
   children: ReactNode;
   suspended?: boolean;
 }) {
-  const { locale } = useMemoryLanguage();
+  const { text } = useMemoryLanguage();
   const compact = useMediaPreference("(max-width: 1100px)");
   const reduceMotion = useMediaPreference("(prefers-reduced-motion: reduce)");
   const reduceTransparency = useMediaPreference(
@@ -137,7 +137,7 @@ export function MemoryEvidencePanel({
       className="map-inspector"
       {...(modal ? { role: "dialog", "aria-modal": !suspended } : {})}
       inert={suspended}
-      aria-label={locale === "es" ? "Memoria y texto original" : "记忆与原文"}
+      aria-label={text("记忆与原文")}
       data-tour-id="memory-original-pane"
       tabIndex={-1}
       hidden={!present || (compact && suspended)}

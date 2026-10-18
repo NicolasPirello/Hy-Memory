@@ -29,6 +29,14 @@ import { R6Button, R6Switch } from "./R6Controls";
 import { latestSource, useSource } from "./source-state";
 import "./application-detail.css";
 
+/** A failed host write as data: worded only when rendered. */
+type HostFailure = { reason: string | null; rereadFailed: boolean };
+type InstallError = {
+  key: MessageKey;
+  params: Record<string, string>;
+  failure?: HostFailure;
+};
+
 const SYNC_UNCONFIRMED = "此应用的处理开关结果未能确认，其他应用不受影响。";
 // D97: the single sync switch now governs both taking in new data and
 // generating memories, so the separate read-permission switch is hidden, not
@@ -79,8 +87,11 @@ export function ApplicationDetail({
   onBack(): void;
 }) {
   const { text, t, locale } = useOnboardingTranslation();
-  function failureNote(reason: string | null, rereadFailed = false) {
-    return `${reason ? `${text("原因")}${locale === "es" ? ": " : "："}${text(reason)}。` : ""}${rereadFailed ? text("当前接入状态也未能重新读取，显示的可能不是最新状态。") : ""}`;
+  /** Word a host failure at render time so a language switch re-words it. */
+  function failureNote({ reason, rereadFailed }: HostFailure) {
+    return `${reason ? t("appFailureReason", { reason: text(reason) }) : ""}${
+      rereadFailed ? t("appFailureReread") : ""
+    }`;
   }
   const source = useSource(given);
   const hosts = useRecallHosts().data;
@@ -95,9 +106,7 @@ export function ApplicationDetail({
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState(false);
   const [installing, setInstalling] = useState(false);
-  const [installError, setInstallError] = useState<
-    string | { key: MessageKey; params: Record<string, string> }
-  >("");
+  const [installError, setInstallError] = useState<string | InstallError>("");
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState("");
   const [memoryPending, setMemoryPending] = useState(false);
@@ -304,7 +313,12 @@ export function ApplicationDetail({
   const hostError =
     typeof installError === "string"
       ? text(installError)
-      : t(installError.key, installError.params);
+      : t(installError.key, {
+          ...installError.params,
+          ...(installError.failure
+            ? { reason: failureNote(installError.failure) }
+            : {}),
+        });
   async function applyInsertion(enabled: boolean) {
     const bridge = window.oneMemory;
     if (!bridge) return;
@@ -317,7 +331,10 @@ export function ApplicationDetail({
     const { outcome } = await disconnectHost(hostId);
     if (outcome.state === "failed")
       throw Object.assign(Error("disconnect_failed"), {
-        note: failureNote(outcome.reason, outcome.rereadFailed),
+        failure: {
+          reason: outcome.reason,
+          rereadFailed: outcome.rereadFailed,
+        } satisfies HostFailure,
       });
     setLink(null);
     if (outcome.state === "review")
@@ -365,18 +382,18 @@ export function ApplicationDetail({
             wanted
               ? {
                   key: "appConnectFailed",
-                  params: {
-                    reason: failureNote(
-                      hostWriteReason(error),
-                      hostRereadFailed(error),
-                    ),
+                  params: {},
+                  failure: {
+                    reason: hostWriteReason(error),
+                    rereadFailed: hostRereadFailed(error),
                   },
                 }
               : {
                   key: "appDisconnectFailed",
-                  params: {
-                    name: source.display_name,
-                    reason: (error as { note?: string }).note ?? "",
+                  params: { name: source.display_name },
+                  failure: (error as { failure?: HostFailure }).failure ?? {
+                    reason: null,
+                    rereadFailed: false,
                   },
                 },
           );
@@ -466,11 +483,10 @@ export function ApplicationDetail({
         } catch (error) {
           setInstallError({
             key: "appPermissionFailed",
-            params: {
-              reason: failureNote(
-                hostWriteReason(error),
-                hostRereadFailed(error),
-              ),
+            params: {},
+            failure: {
+              reason: hostWriteReason(error),
+              rereadFailed: hostRereadFailed(error),
             },
           });
         }

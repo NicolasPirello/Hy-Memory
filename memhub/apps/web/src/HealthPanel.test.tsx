@@ -675,6 +675,32 @@ describe("HealthPanel", () => {
       expect(block.textContent).toContain("暂无需要处理的问题");
     });
 
+    it("read receipt timestamps follow the Spanish interface language", async () => {
+      localStorage.setItem("one-memory.gui-language", "es");
+      try {
+        render(
+          <LanguageProvider>
+            <HealthPanel imports={imports()} />
+          </LanguageProvider>,
+        );
+        await settle();
+        getMemoryProcessing.mockRejectedValue(new Error("offline"));
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(5_000);
+        });
+        const stamps = Array.from(
+          document.querySelectorAll(".health-stamp time"),
+        );
+        expect(stamps.length).toBeGreaterThan(0);
+        for (const stamp of stamps) {
+          expect(stamp.textContent).toMatch(/^Hoy /);
+          expect(stamp.textContent).not.toContain("今天");
+        }
+      } finally {
+        localStorage.clear();
+      }
+    });
+
     it("sourceSnapshot 过期不继续报服务运行中或来源空", async () => {
       render(
         <HealthPanel

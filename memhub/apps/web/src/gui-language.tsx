@@ -3,8 +3,10 @@ import {
   isLanguageSnapshot,
   type LanguagePreference,
   type LanguageSnapshot,
+  plainCount,
   resolveGuiLocale,
   translate,
+  translateCount,
 } from "@one-memory/contracts/gui-i18n";
 import {
   createContext,
@@ -202,5 +204,25 @@ export function useGuiLanguage() {
       key: Parameters<typeof translate>[1],
       params?: Parameters<typeof translate>[2],
     ) => translate(language.locale, key, params),
+    /** Count-aware `t`: picks the Spanish `.one` variant and groups digits. */
+    tn: (
+      key: Parameters<typeof translate>[1],
+      count: number,
+      params?: Parameters<typeof translate>[2],
+    ) =>
+      translateCount(language.locale, key, count, {
+        ...params,
+        count: new Intl.NumberFormat(language.locale).format(count),
+      }),
+    /** `tn` for copy whose Chinese has always shown the bare number. */
+    tnPlain: (
+      key: Parameters<typeof translate>[1],
+      count: number,
+      params?: Parameters<typeof translate>[2],
+    ) =>
+      translateCount(language.locale, key, count, {
+        ...params,
+        count: plainCount(language.locale, count),
+      }),
   };
 }

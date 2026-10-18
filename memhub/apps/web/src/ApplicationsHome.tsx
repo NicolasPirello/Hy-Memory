@@ -642,7 +642,7 @@ export function ApplicationsHome({
     sourceMatchesHost(source.source_id, recentCall?.host_id ?? null),
   );
   const attention = callAttention(callEvents);
-  const attentionHost = attention ? callHostName(attention.host) : null;
+  const attentionHost = attention ? callHostName(attention.host, locale) : null;
   const activity = summaryUnavailable
     ? "unavailable"
     : visible === null
@@ -764,7 +764,7 @@ export function ApplicationsHome({
         ? a("autoHostFailed", {
             name: nameOf(failure.sourceId),
             reason: failure.reason
-              ? `${locale === "es" ? ": " : "："}${failure.reason}`
+              ? a("failureReason", { reason: failure.reason })
               : "",
           })
         : a("autoSyncFailed", {

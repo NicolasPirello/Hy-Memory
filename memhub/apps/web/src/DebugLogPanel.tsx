@@ -51,7 +51,7 @@ const SERVICE_LABELS: Record<DebugLogEntry["service"], string> = {
 };
 
 export function DebugLogPanel() {
-  const { t, locale } = useGuiLanguage();
+  const { t, tn, locale } = useGuiLanguage();
   const supported = typeof window.oneMemory?.getDebugLogs === "function";
   const [open, setOpen] = useState(false);
   const [live, setLive] = useState(true);
@@ -143,11 +143,7 @@ export function DebugLogPanel() {
           <header className="debug-log-header">
             <div>
               <strong>{t("debugTitle")}</strong>
-              <span>
-                {t("debugCount", {
-                  count: entries.length.toLocaleString(locale),
-                })}
-              </span>
+              <span>{tn("debugCount", entries.length)}</span>
             </div>
             <div className="debug-log-header-actions">
               <button
@@ -244,11 +240,7 @@ export function DebugLogPanel() {
             ))}
           </fieldset>
           <div className="debug-log-status" aria-live="polite">
-            <span>
-              {t("debugMatches", {
-                count: filtered.length.toLocaleString(locale),
-              })}
-            </span>
+            <span>{tn("debugMatches", filtered.length)}</span>
             <span>{live ? t("debugLive") : t("debugPaused")}</span>
             {snapshot?.truncated ? <span>{t("debugTruncated")}</span> : null}
             {readState === "error" ? (

@@ -1,4 +1,5 @@
 import type { MemoryDetail } from "@one-memory/contracts";
+import { type GuiLocale, translate } from "@one-memory/contracts/gui-i18n";
 import { Check, Globe2, LockKeyhole, Settings2 } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { apiErrorCode } from "./api";
@@ -15,7 +16,11 @@ const modeOf = (scopes: string[]): Mode =>
       ? "disabled"
       : "limited";
 
-export function memoryProvenanceLabel(detail: MemoryDetail): string {
+export function memoryProvenanceLabel(
+  detail: MemoryDetail,
+  locale: GuiLocale = "zh-CN",
+): string {
+  const t = (key: Parameters<typeof translate>[1]) => translate(locale, key);
   const evidence = detail.evidence.filter((item) => item.available);
   if (
     evidence.length &&
@@ -26,21 +31,21 @@ export function memoryProvenanceLabel(detail: MemoryDetail): string {
     );
     const author =
       authors.size !== 1
-        ? "多位作者"
+        ? t("provenance.multiple")
         : authors.has("person")
-          ? "用户原文"
+          ? t("provenance.person")
           : authors.has("agent")
-            ? "Agent 原文"
-            : "作者未知";
-    return `导入的已有记忆 · ${author}`;
+            ? t("provenance.agent")
+            : t("provenance.unknown");
+    return translate(locale, "provenance.imported", { author });
   }
   return detail.memory.origin === "manual"
-    ? "手动添加"
+    ? t("provenance.manual")
     : detail.memory.origin === "answered"
-      ? "问答生成"
+      ? t("provenance.answered")
       : detail.memory.origin === "agent"
-        ? "由 AI 回复整理"
-        : "由原始对话整理";
+        ? t("provenance.generated")
+        : t("provenance.conversation");
 }
 
 export function MemoryRecallScope({

@@ -1,10 +1,13 @@
+import {
+  type ConnectionMaterial,
+  connectionPrompt,
+} from "@one-memory/contracts/gui-i18n";
 import { Copy, RefreshCw } from "lucide-react";
 import { useState } from "react";
-import { connectionPromptSpanish } from "./connection-prompt";
 import { copyText } from "./copy-text";
 import { useOnboardingTranslation } from "./onboarding-language";
 
-type Material = { mcp: string; shell: string | null; prompt: string };
+type Material = ConnectionMaterial;
 type Mode = keyof Material;
 
 export function ConnectionFallback() {
@@ -17,8 +20,8 @@ export function ConnectionFallback() {
   const available = !!window.oneMemory?.getConnectionMaterial;
   // Localize only the template prose; never parse or rewrite technical material.
   const value = material
-    ? mode === "prompt" && locale === "es"
-      ? connectionPromptSpanish(material)
+    ? mode === "prompt"
+      ? connectionPrompt(locale, material)
       : (material[mode] ?? "")
     : "";
 

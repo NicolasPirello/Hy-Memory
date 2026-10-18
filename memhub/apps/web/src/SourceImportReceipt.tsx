@@ -3,10 +3,11 @@ import type {
   SourceImportReceipt as Receipt,
   SourceResponse,
 } from "@one-memory/contracts";
+import type { GuiLocale } from "@one-memory/contracts/gui-i18n";
 import { FileText, RefreshCw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { getConversation, getSourceImportReceipt } from "./api";
-import { useMemoryLanguage } from "./memory-language";
+import { memoryText, useMemoryLanguage } from "./memory-language";
 
 export function SourceImportReceipt({ source }: { source: SourceResponse }) {
   return source.authorized ? (
@@ -159,21 +160,19 @@ function ReceiptBody({ source }: { source: SourceResponse }) {
               </dl>
               <p className="source-receipt-note">
                 {receipt.unknown_time_messages > 0
-                  ? locale === "es"
-                    ? `${count(receipt.unknown_time_messages)} registros sin fecha original; no se sustituyó por la fecha de importación.`
-                    : `${receipt.unknown_time_messages.toLocaleString(locale)} 条记录没有原始时间，未用导入时间代替。`
+                  ? text("{count} 条记录没有原始时间，未用导入时间代替。", {
+                      count: count(receipt.unknown_time_messages),
+                    })
                   : text("原始时间来自已保存记录。")}{" "}
-                {locale === "es"
-                  ? "Los autores se cuentan según los registros actuales; no implica que la extracción o la verificación semántica hayan terminado."
-                  : "作者数量按当前记录分类统计，不代表记忆抽取已完成或语义已核实。"}
+                {text(
+                  "作者数量按当前记录分类统计，不代表记忆抽取已完成或语义已核实。",
+                )}
               </p>
               <p className="source-receipt-meta">
-                {locale === "es" ? "Medido el " : "统计于 "}
+                {text("统计于 ")}
                 {time(receipt.measured_at, locale)}
                 {receipt.messages !== source.imported_messages
-                  ? locale === "es"
-                    ? " · La importación continúa; actualiza para verificar"
-                    : " · 导入数量仍在更新，可刷新核对"
+                  ? text(" · 导入数量仍在更新，可刷新核对")
                   : ""}
               </p>
               {receipt.examples.length > 0 ? (
@@ -265,10 +264,8 @@ function author(value: string) {
         ? "工具"
         : "作者未知";
 }
-function time(value: string | null, locale = "zh-CN") {
+function time(value: string | null, locale: GuiLocale) {
   return value && Number.isFinite(Date.parse(value))
     ? new Date(value).toLocaleString(locale)
-    : locale === "es"
-      ? "Hora desconocida"
-      : "时间未知";
+    : memoryText(locale, "时间未知");
 }
